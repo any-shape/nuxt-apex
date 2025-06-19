@@ -1,0 +1,4 @@
+import { useFetch } from 'nuxt/app'
+export default function useTFetch:apiFnName<T = :inputType>(data: T) {
+  return useFetch<:responseType>(:url, { method: :method, :inputData } )
+}
