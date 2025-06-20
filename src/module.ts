@@ -1,19 +1,18 @@
-import { defineNuxtModule, createResolver, addTemplate, addImports, addImportsDir } from '@nuxt/kit'
-import { resolve, normalize, dirname, join, relative } from 'node:path'
-import { glob } from 'tinyglobby'
-import { Project, SyntaxKind, Node, type ExportAssignment, TypeAliasDeclaration } from 'ts-morph'
+import { defineNuxtModule, addImportsDir } from '@nuxt/kit'
+import { resolve, normalize, dirname } from 'node:path'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { availableParallelism } from 'node:os'
+import { Project, SyntaxKind, Node, type ExportAssignment, TypeAliasDeclaration } from 'ts-morph'
+import { glob } from 'tinyglobby'
+import pLimit from 'p-limit'
 
 export interface ApiGeneratorModuleOptions {
   /** Custom path to the Rust binary (optional) */
   sourcePath?: string
   /** Output filename under the Nuxt buildDir (default: 'api.ts') */
   outputPath?: string,
-  /** Composable names (default: 'useTFetch' and 'useTFetchAsync') */
-  composableNames?: {
-    tFetch: string,
-    tFetchAsync: string
-  }
+  /** Composable name prefix (default: 'useTFetch') */
+  composableName?: string
 }
 
 type EndpointStructure = {
@@ -21,6 +20,8 @@ type EndpointStructure = {
   method: 'get' | 'post' | 'put' | 'delete',
   name: string
 }
+
+let _tsProject: Project | null = null
 
 export default defineNuxtModule<ApiGeneratorModuleOptions>({
   meta: {
@@ -30,46 +31,54 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
   defaults: {
     sourcePath: 'api/',
     outputPath: 'api-generator/composables',
-    composableNames: {
-      tFetch: 'useTFetch',
-      tFetchAsync: 'useTFetchAsync'
-    }
+    composableName: 'useTFetch',
   },
   async setup(options, nuxt) {
-    const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/s, '/')
+    const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
 
     const endpoints = await findEndpoints(sourcePath)
     if (endpoints.length === 0) {
       return
     }
 
-    const project = new Project({
-      tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/s, '/'),
-      skipFileDependencyResolution: true,
-      compilerOptions: {
-        skipLibCheck: true,
-        incremental: true,
-      },
-    })
+    const project = getTsProject(resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'))
     project.resolveSourceFileDependencies()
     const folder = resolve(nuxt.options.rootDir, 'node_modules/@nuxt-api-generator/composables')
+    const limit = pLimit(availableParallelism() - 1 || 1)
 
-    for (const e of endpoints) {
-      const structure = getEndpointStructure(e, options.sourcePath!)
-      const types = extractTypesFromEndpoint(project, e)
+    const executor = (e: string) => createApiFunction(
+      folder,
+      options.outputPath!,
+      extractTypesFromEndpoint(e, project),
+      getEndpointStructure(e, sourcePath)
+    )
 
-      await createApiFunction(folder, options.composableNames!, types, structure)
-    }
-
+    await Promise.all(endpoints.map(e => limit(() => executor(e))))
     addImportsDir(folder)
   }
 })
+
+function getTsProject(tsConfigFilePath: string) {
+  return _tsProject ??= new Project({
+    tsConfigFilePath,
+    skipFileDependencyResolution: true,
+    skipAddingFilesFromTsConfig: true,
+    skipLoadingLibFiles: true,
+    compilerOptions: {
+      skipLibCheck: true,
+      allowJs: false,
+      declaration: false,
+      noEmit: true,
+      preserveConstEnums: false
+    },
+  })
+}
 
 async function findEndpoints(apiDir: string) {
   return await glob('**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })
 }
 
-function extractTypesFromEndpoint(project: Project, endpoint: string): [string, string] {
+function extractTypesFromEndpoint(endpoint: string, project: Project): [string, string] {
   const result: [string, string] = ['', '']
 
   const handler = project
@@ -136,8 +145,8 @@ function getEndpointStructure(endpoint: string, sourcePath: string): EndpointStr
   }
 }
 
-async function createApiFunction(fileLocation: string, fileNames: { tFetch: string, tFetchAsync: string }, typesInfo: [string, string], endpointInfo: EndpointStructure) {
-  const templateTFetch = await readFile(resolve(__dirname, 'runtime/templates/use-fetch-with-types.txt'), 'utf8')
+async function createApiFunction(fileLocation: string, fileName: string, typesInfo: [string, string], endpointInfo: EndpointStructure) {
+  const templateTFetch = await readFile(resolve(__dirname, 'runtime/templates/fetch.txt'), 'utf8')
   const fnCode = templateTFetch
     .replace(/:inputType/g, typesInfo[0])
     .replace(/:responseType/g, typesInfo[1])
@@ -146,16 +155,16 @@ async function createApiFunction(fileLocation: string, fileNames: { tFetch: stri
     .replace(/:apiFnName/g, endpointInfo.name)
     .replace(/:inputData/g, ['get', 'delete'].includes(endpointInfo.method) ? 'params: data' : 'body: data')
 
-  const file = resolve(fileLocation, `${fileNames.tFetch}${endpointInfo.name}.ts`).replace(/\\/g, '/')
+  const file = resolve(fileLocation, `${fileName}${endpointInfo.name}.ts`).replace(/\\/g, '/')
   await createFile(file, fnCode)
-}
-
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 async function createFile(path: string, content: string) {
   const dir = dirname(path)
   await mkdir(dir, { recursive: true })
   await writeFile(path, content)
+}
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
