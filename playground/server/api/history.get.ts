@@ -1,4 +1,4 @@
-export default defineAdwancedEventHandler<Input>(async data => {
+export default defineAdwancedEventHandler<{ test: number }>(async data => {
   return t()
 })
 
@@ -7,6 +7,6 @@ function t(): Output {
   return {
     a: '',
     b: '',
-    c: 5
+    c: 6
   }
 }

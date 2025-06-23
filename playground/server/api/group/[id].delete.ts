@@ -7,6 +7,6 @@ function t(): Output {
   return {
     a: '',
     b: '',
-    c: 5
+    c: 9
   }
 }
