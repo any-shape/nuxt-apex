@@ -1,11 +1,10 @@
-import { defineNuxtModule, addImportsDir, addImports } from '@nuxt/kit'
+import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
 import { resolve, normalize, dirname, relative } from 'node:path'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, unlink, writeFile, rm } from 'node:fs/promises'
 import { availableParallelism } from 'node:os'
-import { Project, SyntaxKind, Node, type ExportAssignment, type ProjectOptions, TypeAliasDeclaration } from 'ts-morph'
+import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type ProjectOptions, TypeAliasDeclaration } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
-import { exec } from 'node:child_process'
 
 export interface ApiGeneratorModuleOptions {
   /** Custom path to the Rust binary (optional) */
@@ -20,6 +19,7 @@ export interface ApiGeneratorModuleOptions {
 
 type EndpointStructure = {
   url: string,
+  slugs: string[],
   method: 'get' | 'post' | 'put' | 'delete',
   name: string
 }
@@ -49,6 +49,8 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
     }
   },
   async setup(options, nuxt) {
+    const { resolve } = createResolver(import.meta.url)
+
     // console.time('nuxt-api-generator')
     const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
 
@@ -56,30 +58,36 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
     if (endpoints.length === 0) return
 
     const project = getTsProject({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
-    project.resolveSourceFileDependencies()
 
     const folder = resolve(nuxt.options.rootDir, `node_modules/@${options.outputPath}`).replace(/\\/g, '/')
     const limit = pLimit(availableParallelism() - 1 || 1)
 
-    const executor = async (e: string) => createApiFunction(
+    const executor = async (e: string, isUpdate?: boolean) => createApiFunction(
       folder,
       options.composableName!,
-      await extractTypesFromEndpoint(e, project),
+      await extractTypesFromEndpoint(e, project, isUpdate),
       getEndpointStructure(e, sourcePath, options.sourcePath!)
     )
 
     if(!nuxt.options._prepare && !nuxt.options._build) {
       nuxt.hook('builder:watch', async (event, path) => {
-        if (event === 'change' && path.includes(sourcePath.split('/').slice(-1*(options.sourcePath!.split('/').length + 1)).join('/')) && /\.(get|post|put|delete)\.ts$/s) {
-          executor(resolve(nuxt.options.rootDir, path).replace(/\\/g, '/'))
+        const isProcessFile = path.includes(sourcePath.split('/').slice(-1*(options.sourcePath!.split('/').length + 1)).join('/')) && /\.(get|post|put|delete)\.ts$/s.test(path)
+
+        if ((event === 'change' || event === 'add') && isProcessFile) {
+          executor(resolve(nuxt.options.rootDir, path).replace(/\\/g, '/'), event === 'change')
+        }
+        else if(event === 'unlink' && isProcessFile) {
+          await unlink(resolve(nuxt.options.rootDir, path).replace(/\\/g, '/'))
         }
       })
     }
 
     if(nuxt.options._prepare) {
+      await rm(folder, { recursive: true, force: true })
       await Promise.all(endpoints.map(e => limit(() => executor(e))))
     }
 
+    addImportsDir(['utils'].map(d => resolve(`./runtime/${d}`)))
     // console.timeEnd('nuxt-api-generator')
   }
 })
@@ -92,23 +100,40 @@ async function findEndpoints(apiDir: string) {
   return await glob('**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })
 }
 
-async function extractTypesFromEndpoint(endpoint: string, project: Project): Promise<[string, string]> {
+async function extractTypesFromEndpoint(endpoint: string, project: Project, isUpdate?: boolean): Promise<[string, string]> {
   const result: [string, string] = ['', '']
 
   const sf = project.getSourceFile(endpoint) || project.addSourceFileAtPath(endpoint)
-  // await sf.refreshFromFileSystem()
+
+  if(isUpdate) {
+    await sf.refreshFromFileSystem()
+    project.resolveSourceFileDependencies()
+  }
 
   const handler = sf.getExportAssignment((exp: ExportAssignment) => {
-      const expression = exp.getExpressionIfKind(SyntaxKind.CallExpression)
-      if (!expression) return false
+    const expression = exp.getExpressionIfKind(SyntaxKind.CallExpression)
+    if (!expression) return false
 
-      const identifier = expression.getExpressionIfKind(SyntaxKind.Identifier)
-      return /^defineAdwancedEventHandler$/s.test(identifier?.getText() || '')
-    })?.getExpressionIfKind(SyntaxKind.CallExpression)
+    const identifier = expression.getExpressionIfKind(SyntaxKind.Identifier)
+    return /^defineAdwancedEventHandler$/s.test(identifier?.getText() || '')
+  })?.getExpressionIfKind(SyntaxKind.CallExpression)
+
+  const getFinalType = (aliasSymbol: Symbol | undefined, resultType: 'payload' | 'response') => {
+    const resultIndex = resultType === 'payload' ? 0 : 1
+
+    if(aliasSymbol) {
+      const aliasType = aliasSymbol?.getDeclarations().find(Node.isTypeAliasDeclaration)as TypeAliasDeclaration | undefined
+      result[resultIndex] = aliasType?.getTypeNode()?.getText({ trimLeadingIndentation: true }).replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
+    }
+    else {
+      result[resultIndex] = handler?.getTypeArguments()[0].getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
+    }
+
+    if(result[resultIndex] === 'unknown') console.warn(`Can't find ${resultType} type for endpoint ${endpoint}, it will be unknown`)
+  }
 
   const aliasSymbol = handler?.getTypeArguments()[0].getType()?.getAliasSymbol()
-  const aliasType = aliasSymbol?.getDeclarations().find(Node.isTypeAliasDeclaration)as TypeAliasDeclaration | undefined
-  result[0] = aliasType?.getTypeNode()?.getText({ trimLeadingIndentation: true }).replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
+  getFinalType(aliasSymbol, 'payload')
 
   const arrow = handler?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
   let payloadType = arrow?.getReturnType().getTypeArguments()[0]
@@ -117,13 +142,7 @@ async function extractTypesFromEndpoint(endpoint: string, project: Project): Pro
   }
 
   const aliasSym = payloadType?.getAliasSymbol()
-  if (aliasSym) {
-    const aliasDecl = aliasSym.getDeclarations().find(Node.isTypeAliasDeclaration) as TypeAliasDeclaration
-    result[1] = aliasDecl.getTypeNode()?.getText({ trimLeadingIndentation: true }).replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
-  }
-  else {
-    result[1] = payloadType?.getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
-  }
+  getFinalType(aliasSym, 'response')
 
   return result
 }
@@ -147,14 +166,23 @@ function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: str
     ? d[method] + 'By' + capitalize(nameParts[0].replaceAll(/\[|\]/g, ''))
     : nameParts[0] === 'index'
       ? d[method]
-      : nameParts[0]
+      : capitalize(nameParts[0]) + capitalize(d[method])
+
+  const slugs: string[] = []
+  const url = normalize(baseUrl + '/' + path.map(p => {
+    p = /\[.+\]\.(get|post|put|delete)/s.test(p) ? p.split('.')[0] : p
+    if(/\[.+\]/s.test(p)) {
+      const slug = p.replaceAll(/\[|\]/g, '')
+      slugs.push(slug)
+
+      return '${data.' + slug + '}'
+    }
+    else return p
+  }).join('/')).replace(/\\/g, '/')
 
   return {
-    url: normalize(baseUrl + '/' + path.slice(0, -1).map(p => {
-      return /\[.+\]/s.test(p)
-        ? '${' + p.replaceAll(/\[|\]/g, '') + '}'
-        : p
-    }).join('/')).replace(/\\/g, '/'),
+    url,
+    slugs,
     method,
     name: namePath + capitalize(name)
   }
@@ -165,11 +193,14 @@ async function createApiFunction(fileLocation: string, namePrefix: string, types
   const fnCode = templateTFetch
     .replace(/:inputType/g, typesInfo[0])
     .replace(/:responseType/g, typesInfo[1])
-    .replace(/:url/g, `'${endpointInfo.url}'`)
+    .replace(/:url/g, `\`${endpointInfo.url}\``)
     .replace(/:method/g, `'${endpointInfo.method}'`)
     .replace(/:apiNamePrefix/g, namePrefix)
     .replace(/:apiFnName/g, endpointInfo.name)
-    .replace(/:inputData/g, ['get', 'delete'].includes(endpointInfo.method) ? 'params: data' : 'body: data')
+    .replace(
+      /:inputData/g,
+      (['get', 'delete'].includes(endpointInfo.method) ? 'params' : 'body') + `: apiGenOmit(data, ${JSON.stringify(endpointInfo.slugs)})`
+    )
 
   const fileName = namePrefix + endpointInfo.name
   const path = resolve(fileLocation, `${fileName}.ts`).replace(/\\/g, '/')

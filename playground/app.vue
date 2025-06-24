@@ -1,6 +1,7 @@
 <template>
   <div>
     Nuxt module playground!
+    {{ y }}
   </div>
 </template>
 
