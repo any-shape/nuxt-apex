@@ -6,7 +6,7 @@ import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type Pro
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
-import { createReadStream } from 'fs'
+import { existsSync } from 'node:fs'
 
 export interface ApiGeneratorModuleOptions {
   /** Custom path to the source files (default: 'api') */
@@ -26,11 +26,13 @@ type EndpointStructure = {
   name: string
 }
 
+let _fileHashes: Map<string, string> | null = null
 let _tsProject: Project | null = null
 let _template: string | null = null
 
 const _fileGenIds = new Map<string, number>()
-const _fileHashes = new Map<string, number>()
+
+const { h64Raw } = await xxhash()
 
 export default defineNuxtModule<ApiGeneratorModuleOptions>({
   meta: {
@@ -39,7 +41,7 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
   },
   defaults: {
     sourcePath: 'api',
-    outputPath: 'nuxt-api-generator/composables',
+    outputPath: '@nuxt-api-generator',
     composableName: 'useTFetch',
     tsMorphOptions: {
       skipFileDependencyResolution: true,
@@ -57,16 +59,21 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    console.time('nuxt-api-generator')
+    // console.time('nuxt-api-generator')
     const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
+    const cacheFilePath = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/cache.json`)
 
-    const endpoints = await findEndpoints(sourcePath)
+    _fileHashes ??= await readAllCache(cacheFilePath)
+    const endpoints = await findEndpoints(sourcePath, true)
+
+    console.log(`Found ${endpoints.length} endpoints`);
+
     if (endpoints.length === 0) return
 
     _tsProject ??= new Project({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
     _template ??= await readFile(resolve(__dirname, 'runtime/templates/fetch.txt'), 'utf8')
 
-    const folder = resolve(nuxt.options.rootDir, `node_modules/@${options.outputPath}`).replace(/\\/g, '/')
+    const outputFolder = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/composables`).replace(/\\/g, '/')
     const limit = pLimit(availableParallelism() - 1 || 1)
 
     const executor = async (e: string, isUpdate?: boolean) =>  {
@@ -76,7 +83,28 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       const et = await extractTypesFromEndpoint(e, _tsProject!, isUpdate)
       const es = getEndpointStructure(e, sourcePath, options.sourcePath!)
 
-      return createApiFunction([e, id], folder, options.composableName!, et, es, _template!)
+      const fnCode = _template!
+        .replace(/:inputType/g, et[0])
+        .replace(/:responseType/g, et[1])
+        .replace(/:url/g, `\`${es.url}\``)
+        .replace(/:method/g, `'${es.method}'`)
+        .replace(/:apiNamePrefix/g, options.composableName)
+        .replace(/:apiFnName/g, es.name)
+        .replace(
+          /:inputData/g,
+          (['get', 'delete'].includes(es.method) ? 'params' : 'body') + `: apiGenOmit(data, ${JSON.stringify(es.slugs)})`
+        )
+
+      const fileName = options.composableName + es.name
+      const path = resolve(outputFolder, `${fileName}.ts`).replace(/\\/g, '/')
+
+      if(_fileGenIds.get(e) !== id) return
+
+      await createFile(path, fnCode)
+      addImports([
+        { name: fileName, as: fileName, from: path },
+        { name: fileName+'Async', as: fileName+'Async', from: path }
+      ])
     }
 
     if(!nuxt.options._prepare && !nuxt.options._build) {
@@ -93,47 +121,23 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
     }
 
     if(nuxt.options._prepare) {
-      await rm(folder, { recursive: true, force: true })
+      await rm(outputFolder, { recursive: true, force: true })
       await Promise.all(endpoints.map(e => limit(() => executor(e))))
+
+      await updateAllCache(endpoints, cacheFilePath)
     }
 
+    // console.timeEnd('nuxt-api-generator')
     addImportsDir(['utils'].map(d => resolve(`./runtime/${d}`)))
-    console.timeEnd('nuxt-api-generator')
   }
 })
 
-async function findEndpoints(apiDir: string) {
-  return await glob('**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })
-}
+async function findEndpoints(apiDir: string, withCache = false) {
+  let endpoints = await glob('**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })
 
-async function createApiFunction([e, id]: [string, number], fileLocation: string, namePrefix: string, typesInfo: [string, string], endpointInfo: EndpointStructure, templateTFetch: string) {
-  const fnCode = templateTFetch
-    .replace(/:inputType/g, typesInfo[0])
-    .replace(/:responseType/g, typesInfo[1])
-    .replace(/:url/g, `\`${endpointInfo.url}\``)
-    .replace(/:method/g, `'${endpointInfo.method}'`)
-    .replace(/:apiNamePrefix/g, namePrefix)
-    .replace(/:apiFnName/g, endpointInfo.name)
-    .replace(
-      /:inputData/g,
-      (['get', 'delete'].includes(endpointInfo.method) ? 'params' : 'body') + `: apiGenOmit(data, ${JSON.stringify(endpointInfo.slugs)})`
-    )
-
-  const fileName = namePrefix + endpointInfo.name
-  const path = resolve(fileLocation, `${fileName}.ts`).replace(/\\/g, '/')
-
-  if(_fileGenIds.get(e) !== id) return
-
-  await createFile(path, fnCode)
-  addImports([
-    { name: fileName, as: fileName, from: path },
-    { name: fileName+'Async', as: fileName+'Async', from: path }
-  ])
-
-  // const h = await hashFile(path)
-  // console.log(path, h);
-
-  // _fileHashes.set(path, h)
+  return withCache
+    ? endpoints.filter(async e => _fileHashes!.get(e) !== (await hashFile(e)))
+    : endpoints
 }
 
 async function extractTypesFromEndpoint(endpoint: string, project: Project, isUpdate?: boolean): Promise<[string, string]> {
@@ -231,14 +235,23 @@ async function createFile(path: string, content: string) {
   await rename(`${path}.tmp`, path)
 }
 
-async function hashFile(filePath: string): Promise<number> {
-  const hasher = (await xxhash()).create32()
-  const rs = createReadStream(filePath, { highWaterMark: 4 << 20 })
+async function hashFile(filePath: string) {
+  const data = await readFile(filePath)
+  return h64Raw(new Uint8Array(data), 0n).toString(16).padStart(16, '0')
+}
 
-  for await (const chunk of rs) {
-    hasher?.update(chunk as Uint8Array)
+async function readAllCache(file: string) {
+  if(!existsSync(file)) return new Map()
+  return new Map(Object.entries(JSON.parse(await readFile(file, 'utf8'))))
+}
+
+async function updateAllCache(endpoints: string[], outFile: string) {
+  for(const e of endpoints) {
+    const h = await hashFile(e)
+    _fileHashes?.set(e, h)
   }
-  return hasher?.digest() || 0
+
+  await createFile(outFile, JSON.stringify(Array.from(_fileHashes!), null, 0))
 }
 
 function capitalize(s: string) {
