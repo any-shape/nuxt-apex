@@ -1,4 +1,4 @@
-export default defineAdwancedEventHandler<{ test: number }>(async data => {
+export default defineAdwancedEventHandler<{ test: number, tst3: string }>(async data => {
   return t()
 })
 
