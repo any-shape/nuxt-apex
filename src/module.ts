@@ -7,7 +7,7 @@ import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type Pro
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
-import { info, warn, error, success } from './logger'
+import { info, error, success } from './logger'
 
 export interface ApiGeneratorModuleOptions {
   /** Custom path to the source files (default: 'api') */
@@ -63,7 +63,7 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    const executor = async (e: string, isUpdate?: boolean) =>  {
+    const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
       const id = (_fileGenIds.get(e) || 0) + 1
       _fileGenIds.set(e, id)
 
@@ -93,6 +93,7 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
         { name: fileName+'Async', as: fileName+'Async', from: path }
       ])
 
+      if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
       return fileName
     }
 
@@ -120,22 +121,24 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       const result = await Promise.allSettled(endpoints.map(e => limit(() => executor(e))))
 
       const fulfilled = result.filter(r => r.status === 'fulfilled').map(r => r.value)
-      success(`Generated ${fulfilled.length} endpoints`)
+      if(fulfilled.length) success(`Generated ${fulfilled.length} endpoints`)
 
-      for(const err of result.filter(r => r.status === 'rejected').map(r => r.reason)) {
-        error(err)
-      }
+      const errors = result.filter(r => r.status === 'rejected').map(r => r.reason)
+      if(errors.length) error(`Errors during generation ${errors.length}:`)
+      for(const err of errors) error(err)
 
       await updateAllCache(endpoints, cacheFilePath)
     }
 
     if(!nuxt.options._prepare && !nuxt.options._build) {
+      info('Endpoint changes watcher has been successfully started')
+
       nuxt.hook('builder:watch', async (event, path) => {
         const isProcessFile = path.includes(sourcePath.split('/').slice(-1 * (options.sourcePath!.split('/').length + 1)).join('/')) && /\.(get|post|put|delete)\.ts$/s.test(path)
         const endpoint = resolve(nuxt.options.rootDir, path).replace(/\\/g, '/')
 
         if((event === 'change' || event === 'add') && isProcessFile) {
-          executor(endpoint, event === 'change')
+          executor(endpoint, event === 'change', false)
         }
         else if(event === 'unlink' && isProcessFile) {
           await unlink(endpoint)
