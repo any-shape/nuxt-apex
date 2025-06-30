@@ -1,6 +1,6 @@
 import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
 import { normalize, dirname } from 'node:path'
-import { mkdir, readFile, unlink, writeFile, rm, rename } from 'node:fs/promises'
+import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { availableParallelism } from 'node:os'
 import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type ProjectOptions, TypeAliasDeclaration } from 'ts-morph'
@@ -12,7 +12,7 @@ import { info, error, success } from './logger'
 export interface ApiGeneratorModuleOptions {
   /** Custom path to the source files (default: 'api') */
   sourcePath: string
-  /** Output path (default: 'node_modules/@nuxt-api-generator/composables') */
+  /** Output path (default: 'node_modules/.nuxt-api-generator/composables') */
   outputPath: string,
   /** Composable name prefix (default: 'useTFetch') */
   composableName: string,
@@ -29,7 +29,7 @@ type EndpointStructure = {
   name: string
 }
 
-let _fileHashes: Map<string, string> | null = null
+let _fileHashes: Map<string, { hash: string, composable: string }> | null = null
 let _tsProject: Project | null = null
 let _composableTemplate: string | null = null
 
@@ -44,7 +44,7 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
   },
   defaults: {
     sourcePath: 'api',
-    outputPath: '@nuxt-api-generator',
+    outputPath: '.nuxt-api-generator',
     composableName: 'useTFetch',
     useCache: true,
     tsMorphOptions: {
@@ -62,6 +62,13 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
   },
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
+
+    // console.time('nuxt-api-generator')
+    const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
+    const cacheFilePath = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/cache.json`)
+
+    const outputFolder = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/composables`).replace(/\\/g, '/')
+    const limit = pLimit(20/*availableParallelism()*/)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
       const id = (_fileGenIds.get(e) || 0) + 1
@@ -94,20 +101,13 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       ])
 
       if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
-      return fileName
+      return { e, c: path }
     }
-
-    // console.time('nuxt-api-generator')
-    const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
-    const cacheFilePath = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/cache.json`)
-
-    const outputFolder = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/composables`).replace(/\\/g, '/')
-    const limit = pLimit(20/*availableParallelism()*/)
 
     _fileHashes ??= await readAllCache(cacheFilePath)
     const endpoints = await findEndpoints(sourcePath, options.useCache ? cacheFilePath : undefined)
 
-    if((endpoints.length !== 0 && nuxt.options._prepare) || (!nuxt.options._prepare && !nuxt.options._build)) {
+    if(endpoints.length !== 0) {
       _tsProject ??= new Project({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
       _composableTemplate ??= await readFile(resolve(import.meta.dirname, 'runtime/templates/fetch.txt'), 'utf8')
     }
@@ -116,18 +116,17 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       return
     }
 
-    if(endpoints.length > 0 && nuxt.options._prepare) {
-      await rm(outputFolder, { recursive: true, force: true }) // should be optimized for decremental removing
+    if(endpoints.length > 0 && (nuxt.options._prepare || nuxt.options._build || !await isFolderExists(outputFolder))) {
       const result = await Promise.allSettled(endpoints.map(e => limit(() => executor(e))))
 
-      const fulfilled = result.filter(r => r.status === 'fulfilled').map(r => r.value)
+      const fulfilled = result.filter(r => r.status === 'fulfilled').map(r => r.value!)
       if(fulfilled.length) success(`Generated ${fulfilled.length} endpoints`)
 
       const errors = result.filter(r => r.status === 'rejected').map(r => r.reason)
       if(errors.length) error(`Errors during generation ${errors.length}:`)
       for(const err of errors) error(err)
 
-      await updateAllCache(endpoints, cacheFilePath)
+      await updateAllCache(fulfilled, cacheFilePath)
     }
 
     if(!nuxt.options._prepare && !nuxt.options._build) {
@@ -262,17 +261,13 @@ async function readAllCache(file: string) {
   return new Map(JSON.parse(await readFile(file, 'utf8')))
 }
 
-async function updateAllCache(endpoints: string[], outFile: string) {
-  for(const e of endpoints) {
-    const h = await hashFile(e)
-    _fileHashes?.set(e, h)
+async function updateAllCache(hashInfo: { e: string, c: string }[], outFile: string) {
+  for(const hi of hashInfo) {
+    const hash = await hashFile(hi.e)
+    _fileHashes?.set(hi.e, {  hash, composable: hi.c })
   }
 
   await createFile(outFile, JSON.stringify(Array.from(_fileHashes!), null, 0))
-}
-
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 async function getCacheDiff(next: string[], cacheFile: string) {
@@ -286,6 +281,7 @@ async function getCacheDiff(next: string[], cacheFile: string) {
   for (const key of _fileHashes!.keys()) {
     if (!lookup[key]) {
       _fileHashes!.delete(key)
+      // await rm(key)
     }
   }
 
@@ -296,10 +292,23 @@ async function getCacheDiff(next: string[], cacheFile: string) {
       continue
     }
 
-    if(_fileHashes!.get(v) === (await hashFile(v))) continue
+    if(_fileHashes!.get(v)?.hash === (await hashFile(v))) continue
     changed.push(v)
   }
 
   await updateAllCache(changed, cacheFile)
   return changed
+}
+
+async function isFolderExists(folder: string) {
+  try {
+    await access(folder)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }

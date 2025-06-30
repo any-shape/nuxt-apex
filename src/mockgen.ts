@@ -1,5 +1,5 @@
 import { promises as fs } from 'fs'
-import path from 'path'
+import path, { basename } from 'path'
 import PLimit from 'p-limit'
 
 /**
@@ -36,10 +36,10 @@ const OUTPUT_MAX_PROPS = 10
 let inputTypeCounter = 0
 
 await generateFakeNuxtApi({
-  targetDir: 'playground/server/api-100',
-  maxDepth: 5,
-  endpointCount: 100,
-  typesFilename: 'types-100.ts',
+  targetDir: 'playground/server/api-500',
+  maxDepth: 7,
+  endpointCount: 500,
+  typesFilename: 'types.d.ts',
   concurrency: 8,
 })
 
@@ -51,7 +51,7 @@ export async function generateFakeNuxtApi(opts: GenerateOptions): Promise<void> 
     targetDir,
     maxDepth,
     endpointCount,
-    typesFilename = 'types.ts',
+    typesFilename = 'types.d.ts',
     concurrency = 8,
   } = opts
 
@@ -71,38 +71,28 @@ export async function generateFakeNuxtApi(opts: GenerateOptions): Promise<void> 
   for (let i = 0; i < endpointCount; i++) {
     tasks.push(
       limit(async () => {
-        // 1. Pick random depth and segments
         const depth = getRandomInt(1, maxDepth)
         const segments = buildRandomSegments(depth)
 
-        // 2. Pick HTTP method
         const method = pickRandomMethod()
 
-        // 3. Compute file paths
         const fileRelPath = path.join(...segments) + `.${method}.ts`
         const filePath = path.join(targetDir, fileRelPath)
 
-        // 4. Ensure directory
         await fs.mkdir(path.dirname(filePath), { recursive: true })
 
-        // 5. Register a new Input type and get its name
         const inputTypeName = await registerInputType(typesPath)
 
-        // 6. Generate output literal
         const outputLiteral = generateOutputLiteral(OUTPUT_MAX_DEPTH, OUTPUT_MAX_PROPS)
 
-        // 7. Build file content and write
-        const content = buildEndpointFile(inputTypeName, outputLiteral)
+        const content = buildEndpointFile(inputTypeName, outputLiteral, targetDir)
         await fs.writeFile(filePath, content, 'utf8')
 
-        // 8. Log progress
         written++
-        console.log(`Writing ${written}/${endpointCount}: ${fileRelPath}`)
       })
     )
   }
 
-  // Wait for all writes to finish
   await Promise.all(tasks)
   console.log(`\nCompleted generating ${endpointCount} endpoints in ${targetDir}`)
 }
@@ -140,15 +130,32 @@ function pickRandomMethod(): 'get' | 'post' | 'put' | 'delete' {
 }
 
 /**
- * Append a new Input interface to types.ts and return its unique name
+ * Append a new Input interface or type to types.ts and return its unique name
  */
 async function registerInputType(typesPath: string): Promise<string> {
   inputTypeCounter++
   const typeName = `Input${inputTypeCounter}`
-  const def = generateInputTypeDefinition()
-  const content = `export interface ${typeName} ${def}\n\n`
+  const { kind, def } = generateInputTypeSpec()
+  let content: string
+  if (kind === 'interface') {
+    content = `export interface ${typeName} ${def}\n\n`
+  } else {
+    content = `export type ${typeName} = ${def}\n\n`
+  }
   await fs.appendFile(typesPath, content, 'utf8')
   return typeName
+}
+
+/** Decide type variant and definition */
+function generateInputTypeSpec(): { kind: 'interface' | 'type'; def: string } {
+  const r = Math.random()
+  if (r < 0.4) {
+    return { kind: 'interface', def: generateSimpleType() }
+  } else if (r < 0.8) {
+    return { kind: 'type', def: generateMediumType() }
+  } else {
+    return { kind: 'type', def: generateComplexType() }
+  }
 }
 
 /** Decide type complexity and delegate */
@@ -251,8 +258,8 @@ function randomOutputKey(idx: number): string {
 }
 
 /** Template the endpoint file content */
-function buildEndpointFile(inputTypeName: string, outputLiteral: string): string {
-  return `export default defineAdwancedEventHandler<${inputTypeName}>(async (data) => {\n  return ${outputLiteral}\n})\n`
+function buildEndpointFile(inputTypeName: string, outputLiteral: string, targetDir: string): string {
+  return `import {${inputTypeName}} from '~/server/${basename(targetDir)}/types'\nexport default defineAdwancedEventHandler<${inputTypeName}>(async (data) => {\n  return ${outputLiteral}\n})\n`
 }
 
 /** Random integer between min and max inclusive */
