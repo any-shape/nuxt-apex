@@ -7,7 +7,9 @@ import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type Pro
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
-import { info, error, success } from './logger'
+import { info, error, success, warn } from './logger'
+import storage from 'node-persist'
+
 
 export interface ApiGeneratorModuleOptions {
   /** Custom path to the source files (default: 'api') */
@@ -17,9 +19,7 @@ export interface ApiGeneratorModuleOptions {
   /** Composable name prefix (default: 'useTFetch') */
   composableName: string,
   /** @see https://ts-morph.com/setup/ */
-  tsMorphOptions: ProjectOptions,
-  /** use cache (default: true). If false, all files will be re-generated even if not changed */
-  useCache: boolean
+  tsMorphOptions: ProjectOptions
 }
 
 type EndpointStructure = {
@@ -29,12 +29,10 @@ type EndpointStructure = {
   name: string
 }
 
-let _fileHashes: Map<string, { hash: string, composable: string }> | null = null
 let _tsProject: Project | null = null
 let _composableTemplate: string | null = null
 
 const _fileGenIds = new Map<string, number>()
-
 const { h64Raw } = await xxhash()
 
 export default defineNuxtModule<ApiGeneratorModuleOptions>({
@@ -46,7 +44,6 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
     sourcePath: 'api',
     outputPath: '.nuxt-api-generator',
     composableName: 'useTFetch',
-    useCache: true,
     tsMorphOptions: {
       skipFileDependencyResolution: true,
       // skipAddingFilesFromTsConfig: true --> // much faster, but works only if api files doesn't include types from another files
@@ -65,12 +62,14 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
 
     // console.time('nuxt-api-generator')
     const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
-    const cacheFilePath = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/cache.json`)
-
     const outputFolder = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/composables`).replace(/\\/g, '/')
+
+    await storage.init({ dir: resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
     const limit = pLimit(20/*availableParallelism()*/)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
+      if(!await readFile(e, 'utf-8').then((content) => content.includes('defineAdwancedEventHandler') ? true : false).catch(() => false)) return
+
       const id = (_fileGenIds.get(e) || 0) + 1
       _fileGenIds.set(e, id)
 
@@ -100,14 +99,14 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
         { name: fileName+'Async', as: fileName+'Async', from: path }
       ])
 
+      await storage.setItem(e, { c: path, hash: await hashFile(path) })
+
       if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
-      return { e, c: path }
     }
 
-    _fileHashes ??= await readAllCache(cacheFilePath)
-    const endpoints = await findEndpoints(sourcePath, options.useCache ? cacheFilePath : undefined)
+    const endpoints = await findEndpoints(sourcePath)
 
-    if(endpoints.length !== 0) {
+    if(endpoints.length > 0) {
       _tsProject ??= new Project({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
       _composableTemplate ??= await readFile(resolve(import.meta.dirname, 'runtime/templates/fetch.txt'), 'utf8')
     }
@@ -125,12 +124,10 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       const errors = result.filter(r => r.status === 'rejected').map(r => r.reason)
       if(errors.length) error(`Errors during generation ${errors.length}:`)
       for(const err of errors) error(err)
-
-      await updateAllCache(fulfilled, cacheFilePath)
     }
 
     if(!nuxt.options._prepare && !nuxt.options._build) {
-      info('Endpoint changes watcher has been successfully started')
+      info('The endpoint change watcher has started successfully')
 
       nuxt.hook('builder:watch', async (event, path) => {
         const isProcessFile = path.includes(sourcePath.split('/').slice(-1 * (options.sourcePath!.split('/').length + 1)).join('/')) && /\.(get|post|put|delete)\.ts$/s.test(path)
@@ -140,7 +137,8 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
           executor(endpoint, event === 'change', false)
         }
         else if(event === 'unlink' && isProcessFile) {
-          await unlink(endpoint)
+          await unlink((await storage.getItem(endpoint)).c)
+          await storage.removeItem(endpoint)
         }
       })
     }
@@ -153,7 +151,7 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
 
 async function findEndpoints(apiDir: string, cacheFile?: string) {
   const endpoints = await glob('**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })
-  return cacheFile ? await getCacheDiff(endpoints, cacheFile) : endpoints
+  return cacheFile ? await compareWithStore(endpoints) : endpoints
 }
 
 async function extractTypesFromEndpoint(endpoint: string, project: Project, isUpdate?: boolean): Promise<[string, string]> {
@@ -185,7 +183,7 @@ async function extractTypesFromEndpoint(endpoint: string, project: Project, isUp
       result[resultIndex] = handler?.getTypeArguments()[0].getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
     }
 
-    if(result[resultIndex] === 'unknown') console.warn(`Can't find ${resultType} type for endpoint ${endpoint}, it will be unknown`)
+    if(result[resultIndex] === 'unknown') warn(`Can't find ${resultType} type for endpoint ${endpoint}, it will be unknown`)
   }
 
   const aliasSymbolPayload = handler?.getTypeArguments()[0].getType()?.getAliasSymbol()
@@ -256,47 +254,31 @@ async function hashFile(filePath: string) {
   return h64Raw(new Uint8Array(data), 0n).toString(16).padStart(16, '0')
 }
 
-async function readAllCache(file: string) {
-  if(!existsSync(file)) return new Map()
-  return new Map(JSON.parse(await readFile(file, 'utf8')))
-}
-
-async function updateAllCache(hashInfo: { e: string, c: string }[], outFile: string) {
-  for(const hi of hashInfo) {
-    const hash = await hashFile(hi.e)
-    _fileHashes?.set(hi.e, {  hash, composable: hi.c })
-  }
-
-  await createFile(outFile, JSON.stringify(Array.from(_fileHashes!), null, 0))
-}
-
-async function getCacheDiff(next: string[], cacheFile: string) {
+async function compareWithStore(endpoints: string[]) {
   const changed: string[] = []
 
   const lookup = Object.create(null) as Record<string, boolean>;
-  for (let i = 0, len = next.length; i < len; i++) {
-    lookup[next[i]] = true
+  for(let i = 0, len = endpoints.length; i < len; i++) {
+    lookup[endpoints[i]] = true
   }
 
-  for (const key of _fileHashes!.keys()) {
-    if (!lookup[key]) {
-      _fileHashes!.delete(key)
-      // await rm(key)
+  for(const key of await storage.keys()) {
+    if(!lookup[key]) {
+      await rm((await storage.getItem(key)).c)
+      await storage.removeItem(key)
     }
   }
 
-  for (let i = 0, len = next.length; i < len; i++) {
-    const v = next[i]
-    if (!_fileHashes!.has(v)) {
-      changed.push(v)
-      continue
-    }
+  for(let i = 0, len = endpoints.length; i < len; i++) {
+    const k = endpoints[i]
+    const v = await storage.getItem(k)
 
-    if(_fileHashes!.get(v)?.hash === (await hashFile(v))) continue
-    changed.push(v)
+    if(v) { changed.push(k); continue; }
+
+    if(v?.hash === (await hashFile(k))) continue
+    changed.push(k)
   }
 
-  await updateAllCache(changed, cacheFile)
   return changed
 }
 
