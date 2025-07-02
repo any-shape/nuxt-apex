@@ -1,9 +1,7 @@
 import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
 import { normalize, dirname } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
-import { availableParallelism } from 'node:os'
-import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type ProjectOptions, TypeAliasDeclaration } from 'ts-morph'
+import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type ProjectOptions, TypeAliasDeclaration, SourceFile } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
@@ -59,13 +57,18 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
   },
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
+    _tsProject ??= new Project({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
+    _composableTemplate ??= await readFile(resolve(import.meta.dirname, 'runtime/templates/fetch.txt'), 'utf8')
 
-    // console.time('nuxt-api-generator')
-    const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
     const outputFolder = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/composables`).replace(/\\/g, '/')
+    const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
+    if(!await isFolderExists(sourcePath)) {
+      error(`Source path "${sourcePath}" doesn't exist`)
+      return
+    }
 
     await storage.init({ dir: resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
-    const limit = pLimit(20/*availableParallelism()*/)
+    const limit = pLimit(50)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
       if(!await readFile(e, 'utf-8').then((content) => content.includes('defineAdwancedEventHandler') ? true : false).catch(() => false)) return
@@ -73,7 +76,7 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       const id = (_fileGenIds.get(e) || 0) + 1
       _fileGenIds.set(e, id)
 
-      const et = await extractTypesFromEndpoint(e, _tsProject!, isUpdate)
+      const et = await extractTypesFromEndpoint(e, isUpdate)
       const es = getEndpointStructure(e, sourcePath, options.sourcePath!)
 
       const fnCode = _composableTemplate!
@@ -99,23 +102,13 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
         { name: fileName+'Async', as: fileName+'Async', from: path }
       ])
 
-      await storage.setItem(e, { c: path, hash: await hashFile(path) })
-
+      await storage.setItem(e, { c: path, hash: await hashFile(e) })
       if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
     }
 
     const endpoints = await findEndpoints(sourcePath)
 
-    if(endpoints.length > 0) {
-      _tsProject ??= new Project({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
-      _composableTemplate ??= await readFile(resolve(import.meta.dirname, 'runtime/templates/fetch.txt'), 'utf8')
-    }
-    else {
-      info('No api endpoints found for generation')
-      return
-    }
-
-    if(endpoints.length > 0 && (nuxt.options._prepare || nuxt.options._build || !await isFolderExists(outputFolder))) {
+    if(endpoints.length > 0 /*&& (nuxt.options._prepare || nuxt.options._build || !await isFolderExists(outputFolder))*/) {
       const result = await Promise.allSettled(endpoints.map(e => limit(() => executor(e))))
 
       const fulfilled = result.filter(r => r.status === 'fulfilled').map(r => r.value!)
@@ -144,24 +137,22 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
     }
 
     addImportsDir(['utils'].map(d => resolve(`./runtime/${d}`)))
-
-    //console.timeEnd('nuxt-api-generator')
   }
 })
 
-async function findEndpoints(apiDir: string, cacheFile?: string) {
+async function findEndpoints(apiDir: string) {
   const endpoints = await glob('**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })
-  return cacheFile ? await compareWithStore(endpoints) : endpoints
+  return await compareWithStore(endpoints)
 }
 
-async function extractTypesFromEndpoint(endpoint: string, project: Project, isUpdate?: boolean): Promise<[string, string]> {
+async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): Promise<[string, string]> {
   const result: [string, string] = ['', '']
-
-  const sf = project.getSourceFile(endpoint) || project.addSourceFileAtPath(endpoint)
+  console.time('nuxt-api-generator')
+  let sf = _tsProject!.getSourceFile(endpoint) || _tsProject!.addSourceFileAtPath(endpoint)
 
   if(isUpdate) {
+    sf = _tsProject!.removeSourceFile(sf) && _tsProject!.addSourceFileAtPath(endpoint)
     await sf.refreshFromFileSystem()
-    project.resolveSourceFileDependencies()
   }
 
   const handler = sf.getExportAssignment((exp: ExportAssignment) => {
@@ -172,32 +163,30 @@ async function extractTypesFromEndpoint(endpoint: string, project: Project, isUp
     return /^defineAdwancedEventHandler$/s.test(identifier?.getText() || '')
   })?.getExpressionIfKind(SyntaxKind.CallExpression)
 
-  const getFinalType = (aliasSymbol: Symbol | undefined, resultType: 'payload' | 'response') => {
-    const resultIndex = resultType === 'payload' ? 0 : 1
-
-    if(aliasSymbol) {
-      const aliasType = aliasSymbol?.getDeclarations().find(Node.isTypeAliasDeclaration)as TypeAliasDeclaration | undefined
-      result[resultIndex] = aliasType?.getTypeNode()?.getText({ trimLeadingIndentation: true }).replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
-    }
-    else {
-      result[resultIndex] = handler?.getTypeArguments()[0].getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
-    }
-
-    if(result[resultIndex] === 'unknown') warn(`Can't find ${resultType} type for endpoint ${endpoint}, it will be unknown`)
+  const getAliasType = (aliasSymbol: Symbol | undefined) => {
+    const aliasType = aliasSymbol?.getDeclarations().find(Node.isTypeAliasDeclaration) as TypeAliasDeclaration | undefined
+    return aliasType?.getTypeNode()?.getText({ trimLeadingIndentation: true }).replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
   }
 
   const aliasSymbolPayload = handler?.getTypeArguments()[0].getType()?.getAliasSymbol()
-  getFinalType(aliasSymbolPayload, 'payload')
+  result[0] = aliasSymbolPayload
+    ? getAliasType(aliasSymbolPayload)
+    : handler?.getTypeArguments()[0].getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
 
   const arrow = handler?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
-  let payloadType = arrow?.getReturnType().getTypeArguments()[0]
-  while (payloadType?.getSymbol()?.getName() === "Promise") {
-    payloadType = payloadType.getTypeArguments()[0]
+  let responseType = arrow?.getReturnType().getTypeArguments()[0]
+  while (responseType?.getSymbol()?.getName() === 'Promise') {
+    responseType = responseType.getTypeArguments()[0]
   }
 
-  const aliasSymbolResponse = payloadType?.getAliasSymbol()
-  getFinalType(aliasSymbolResponse, 'response')
+  result[1] = responseType?.getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
 
+  result.forEach((t, i) => {
+    if(t === 'unknown')
+      warn(`Can't find ${i === 0 ? 'payload' : 'response'} type for endpoint ${endpoint}, it will be unknown`)
+  })
+
+  console.timeEnd('nuxt-api-generator')
   return result
 }
 
@@ -271,11 +260,8 @@ async function compareWithStore(endpoints: string[]) {
 
   for(let i = 0, len = endpoints.length; i < len; i++) {
     const k = endpoints[i]
-    const v = await storage.getItem(k)
 
-    if(v) { changed.push(k); continue; }
-
-    if(v?.hash === (await hashFile(k))) continue
+    if((await storage.getItem(k))?.hash === (await hashFile(k))) continue
     changed.push(k)
   }
 

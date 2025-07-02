@@ -10,3 +10,12 @@ export function defineAdwancedEventHandler<D = unknown, T extends EventHandlerRe
     }
   })
 }
+
+
+export function resp() {
+  return getDynmicaData<{c: number, d: string, e: boolean}[]>()
+}
+
+function getDynmicaData<T>() {
+  return [] as T
+}

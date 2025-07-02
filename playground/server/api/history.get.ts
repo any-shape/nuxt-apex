@@ -1,12 +1,3 @@
 export default defineAdwancedEventHandler<{ test: number, tst3: string }>(async data => {
-  return t()
+  return resp()
 })
-
-
-function t(): Output {
-  return {
-    a: '',
-    b: '',
-    c: 6
-  }
-}

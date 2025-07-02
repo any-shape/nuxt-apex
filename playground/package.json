@@ -3,6 +3,7 @@
   "name": "my-module-playground",
   "type": "module",
   "scripts": {
+    "prepare": "nuxi prepare",
     "dev": "nuxi dev",
     "build": "nuxi build",
     "generate": "nuxi generate"
