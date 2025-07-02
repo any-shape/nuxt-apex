@@ -1,7 +1,7 @@
 import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
 import { normalize, dirname } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
-import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type ProjectOptions, TypeAliasDeclaration, SourceFile } from 'ts-morph'
+import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type ProjectOptions, TypeAliasDeclaration, SourceFile, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
@@ -71,8 +71,6 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
     const limit = pLimit(50)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
-      if(!await readFile(e, 'utf-8').then((content) => content.includes('defineAdwancedEventHandler') ? true : false).catch(() => false)) return
-
       const id = (_fileGenIds.get(e) || 0) + 1
       _fileGenIds.set(e, id)
 
@@ -147,46 +145,139 @@ async function findEndpoints(apiDir: string) {
 
 async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): Promise<[string, string]> {
   const result: [string, string] = ['', '']
-  console.time('nuxt-api-generator')
-  let sf = _tsProject!.getSourceFile(endpoint) || _tsProject!.addSourceFileAtPath(endpoint)
+  const sf = _tsProject!.getSourceFile(endpoint) || _tsProject!.addSourceFileAtPath(endpoint)
 
   if(isUpdate) {
-    sf = _tsProject!.removeSourceFile(sf) && _tsProject!.addSourceFileAtPath(endpoint)
     await sf.refreshFromFileSystem()
+    _tsProject!.resolveSourceFileDependencies()
   }
 
-  const handler = sf.getExportAssignment((exp: ExportAssignment) => {
+  const handlerCall = sf.getExportAssignment(exp => {
     const expression = exp.getExpressionIfKind(SyntaxKind.CallExpression)
     if (!expression) return false
 
-    const identifier = expression.getExpressionIfKind(SyntaxKind.Identifier)
-    return /^defineAdwancedEventHandler$/s.test(identifier?.getText() || '')
+    const id = expression.getExpressionIfKind(SyntaxKind.Identifier)
+    return !!id && /^defineAdwancedEventHandler$/s.test(id?.getText() || '')
   })?.getExpressionIfKind(SyntaxKind.CallExpression)
 
-  const getAliasType = (aliasSymbol: Symbol | undefined) => {
-    const aliasType = aliasSymbol?.getDeclarations().find(Node.isTypeAliasDeclaration) as TypeAliasDeclaration | undefined
-    return aliasType?.getTypeNode()?.getText({ trimLeadingIndentation: true }).replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
+  if (!handlerCall) {
+    throw new Error(`No defineAdwancedEventHandler found in ${endpoint}`)
   }
 
-  const aliasSymbolPayload = handler?.getTypeArguments()[0].getType()?.getAliasSymbol()
-  result[0] = aliasSymbolPayload
-    ? getAliasType(aliasSymbolPayload)
-    : handler?.getTypeArguments()[0].getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
+  const resolveAlias = (sym: Symbol): Symbol => sym.getAliasedSymbol?.() ?? sym
 
-  const arrow = handler?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
+  const getAliasText = (sym: Symbol) => {
+    sym = resolveAlias(sym)
+    const decl = sym?.getDeclarations().find(d => Node.isTypeAliasDeclaration(d) || Node.isInterfaceDeclaration(d)) as TypeAliasDeclaration | InterfaceDeclaration | undefined
+    if(!decl) return 'unknown'
+
+    const typeNode = Node.isTypeAliasDeclaration(decl) ? decl.getTypeNode() : decl
+    return typeNode ? typeNode?.getText({ trimLeadingIndentation: true }).replace(/\s+/gm, '') : sym.getName()
+  }
+
+  const getAliasFile = (sym: Symbol) => {
+    sym = resolveAlias(sym)
+    const decl = sym.getDeclarations().find(d => Node.isTypeAliasDeclaration(d) || Node.isInterfaceDeclaration(d))
+    return decl ? decl.getSourceFile().getFilePath() : 'unknown'
+  }
+
+  const getCallDeclFile = (callExpr: CallExpression) => {
+    const id = callExpr.getExpressionIfKindOrThrow(SyntaxKind.Identifier)
+    const [decl] = id.getDefinitions().map((d) => d.getDeclarationNode()).filter(Boolean) as Node[]
+    if(!decl) return 'unknown'
+
+    const filePath = decl.getSourceFile().getFilePath()
+
+    // find the actual function node if any
+    let fnNode: FunctionDeclaration | FunctionExpression | ArrowFunction | undefined
+
+    if(Node.isFunctionDeclaration(decl) || Node.isFunctionExpression(decl) ||  Node.isArrowFunction(decl)) {
+      fnNode = decl
+    }
+    else if(Node.isVariableDeclaration(decl)) {
+      const init = decl.getInitializer()
+      if(Node.isFunctionExpression(init) || Node.isArrowFunction(init)) {
+        fnNode = init
+      }
+    }
+
+    if(!fnNode) return filePath
+
+    const returns = fnNode.getDescendantsOfKind(SyntaxKind.ReturnStatement) as ReturnStatement[]
+    for(const ret of returns) {
+      const expr = ret.getExpression()
+      if(expr && Node.isCallExpression(expr)) {
+        return getCallDeclFile(expr)
+      }
+    }
+
+    return filePath
+  }
+
+  const r = {
+    inputType: '',
+    inputFilePath: '',
+    responseType: '',
+    responseFilePath: ''
+  }
+
+  //extract payload type and filepath
+  const [payloadArg] = handlerCall.getTypeArguments()
+  const payloadAlias = payloadArg.getType().getAliasSymbol()
+
+  r.inputType = payloadAlias ? getAliasText(payloadAlias) : payloadArg.getText().replace(/\s+/gm, '')
+  r.inputFilePath = payloadAlias ? getAliasFile(payloadAlias) : sf.getFilePath()
+
+  //extract response type and filepath
+  const arrow = handlerCall?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
+
   let responseType = arrow?.getReturnType().getTypeArguments()[0]
   while (responseType?.getSymbol()?.getName() === 'Promise') {
     responseType = responseType.getTypeArguments()[0]
   }
+  const responseAlias = responseType.getAliasSymbol()
 
-  result[1] = responseType?.getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
+  if (responseAlias) {
+    r.responseType = getAliasText(responseAlias)
+    r.responseFilePath = getAliasFile(responseAlias)
+  }
+  else {
+    r.responseType = responseType.getText().replace(/\s+/gm, '')
+
+    let firstCall: CallExpression | undefined;
+    if (Node.isCallExpression(arrow.getBody())) {
+      firstCall = arrow.getBody() as CallExpression
+    }
+    else {
+      const ret = arrow.getBody().getDescendantsOfKind(SyntaxKind.ReturnStatement)[0]
+      const expr = ret?.getExpression()
+
+      if (expr && Node.isCallExpression(expr)) {
+        firstCall = expr
+      }
+    }
+
+    r.responseFilePath = firstCall? getCallDeclFile(firstCall) : sf.getFilePath()
+  }
+
+  console.log(endpoint, r)
+
+  // const aliasSymbolPayload = handlerCall?.getTypeArguments()[0].getType()?.getAliasSymbol()
+  // result[0] = (aliasSymbolPayload && getAliasText(aliasSymbolPayload)) || handlerCall?.getTypeArguments()[0].getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
+
+  // const arrow = handlerCall?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
+  // let responseType = arrow?.getReturnType().getTypeArguments()[0]
+  // while (responseType?.getSymbol()?.getName() === 'Promise') {
+  //   responseType = responseType.getTypeArguments()[0]
+  // }
+
+  // result[1] = responseType?.getAliasSymbol() && getAliasText(responseType.getAliasSymbol()!) || responseType?.getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
 
   result.forEach((t, i) => {
     if(t === 'unknown')
       warn(`Can't find ${i === 0 ? 'payload' : 'response'} type for endpoint ${endpoint}, it will be unknown`)
   })
 
-  console.timeEnd('nuxt-api-generator')
   return result
 }
 
