@@ -1,12 +1,13 @@
 import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
-import { normalize, dirname } from 'node:path'
+import { normalize, dirname, join } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
-import { Project, SyntaxKind, Node, type Symbol, type ExportAssignment, type ProjectOptions, TypeAliasDeclaration, SourceFile, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement } from 'ts-morph'
+import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
-import { info, error, success, warn } from './logger'
+import { info, error, success } from './logger'
 import storage from 'node-persist'
+import { existsSync } from 'node:fs'
 
 
 export interface ApiGeneratorModuleOptions {
@@ -27,6 +28,13 @@ type EndpointStructure = {
   name: string
 }
 
+type EndpointTypeStructure = {
+  inputType: string,
+  inputFilePath: string,
+  responseType: string,
+  responseFilePath: string
+}
+
 let _tsProject: Project | null = null
 let _composableTemplate: string | null = null
 
@@ -44,14 +52,14 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
     composableName: 'useTFetch',
     tsMorphOptions: {
       skipFileDependencyResolution: true,
-      // skipAddingFilesFromTsConfig: true --> // much faster, but works only if api files doesn't include types from another files
-      // skipLoadingLibFiles: true,        --> // much faster, but works only if api files doesn't include types from another files
+      // skipAddingFilesFromTsConfig: true  // --> much faster, but works only if api files doesn't include types from another files
+      // skipLoadingLibFiles: true,            // --> much faster, but works only if api files doesn't include types from another files
       compilerOptions: {
         skipLibCheck: true,
         allowJs: false,
         declaration: false,
         noEmit: true,
-        preserveConstEnums: false
+        preserveConstEnums: false,
       },
     }
   },
@@ -78,8 +86,8 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       const es = getEndpointStructure(e, sourcePath, options.sourcePath!)
 
       const fnCode = _composableTemplate!
-        .replace(/:inputType/g, et[0])
-        .replace(/:responseType/g, et[1])
+        .replace(/:inputType/g, et.inputType)
+        .replace(/:responseType/g, et.responseType)
         .replace(/:url/g, `\`${es.url}\``)
         .replace(/:method/g, `'${es.method}'`)
         .replace(/:apiNamePrefix/g, options.composableName)
@@ -100,13 +108,13 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
         { name: fileName+'Async', as: fileName+'Async', from: path }
       ])
 
-      await storage.setItem(e, { c: path, hash: await hashFile(e) })
+      await storage.setItem(e, { c: path, hash: await hashFile(e), et })
       if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
     }
 
     const endpoints = await findEndpoints(sourcePath)
 
-    if(endpoints.length > 0 /*&& (nuxt.options._prepare || nuxt.options._build || !await isFolderExists(outputFolder))*/) {
+    if(endpoints.length > 0) {
       const result = await Promise.allSettled(endpoints.map(e => limit(() => executor(e))))
 
       const fulfilled = result.filter(r => r.status === 'fulfilled').map(r => r.value!)
@@ -143,8 +151,13 @@ async function findEndpoints(apiDir: string) {
   return await compareWithStore(endpoints)
 }
 
-async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): Promise<[string, string]> {
-  const result: [string, string] = ['', '']
+async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): Promise<EndpointTypeStructure> {
+  const result: EndpointTypeStructure = {
+    inputType: 'unknown',
+    inputFilePath: 'unknown',
+    responseType: 'unknown',
+    responseFilePath: 'unknown'
+  }
   const sf = _tsProject!.getSourceFile(endpoint) || _tsProject!.addSourceFileAtPath(endpoint)
 
   if(isUpdate) {
@@ -164,9 +177,11 @@ async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): P
     throw new Error(`No defineAdwancedEventHandler found in ${endpoint}`)
   }
 
-  const resolveAlias = (sym: Symbol): Symbol => sym.getAliasedSymbol?.() ?? sym
+  function resolveAlias(sym: Symbol): Symbol {
+    return sym.getAliasedSymbol?.() ?? sym
+  }
 
-  const getAliasText = (sym: Symbol) => {
+  function getAliasText(sym: Symbol) {
     sym = resolveAlias(sym)
     const decl = sym?.getDeclarations().find(d => Node.isTypeAliasDeclaration(d) || Node.isInterfaceDeclaration(d)) as TypeAliasDeclaration | InterfaceDeclaration | undefined
     if(!decl) return 'unknown'
@@ -175,22 +190,41 @@ async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): P
     return typeNode ? typeNode?.getText({ trimLeadingIndentation: true }).replace(/\s+/gm, '') : sym.getName()
   }
 
-  const getAliasFile = (sym: Symbol) => {
+  function getAliasFile(sym: Symbol) {
     sym = resolveAlias(sym)
     const decl = sym.getDeclarations().find(d => Node.isTypeAliasDeclaration(d) || Node.isInterfaceDeclaration(d))
     return decl ? decl.getSourceFile().getFilePath() : 'unknown'
   }
 
-  const getCallDeclFile = (callExpr: CallExpression) => {
-    const id = callExpr.getExpressionIfKindOrThrow(SyntaxKind.Identifier)
-    const [decl] = id.getDefinitions().map((d) => d.getDeclarationNode()).filter(Boolean) as Node[]
-    if(!decl) return 'unknown'
+  function getCallDeclFile(callExpr: CallExpression) {
+    const id = callExpr.getExpressionIfKindOrThrow(SyntaxKind.Identifier);
+    const [decl] = id.getDefinitions().map(d => d.getDeclarationNode()).filter(Boolean) as Node[]
+    if (!decl) return 'unknown'
 
-    const filePath = decl.getSourceFile().getFilePath()
+    let filePath = decl.getSourceFile().getFilePath().toString()
+    if(filePath.endsWith('.d.ts')) {
+      const importType = decl.getFirstDescendantByKind(SyntaxKind.ImportType) as ImportTypeNode | undefined
 
-    // find the actual function node if any
+      if (importType) {
+        const moduleSpecifier = importType.getArgument().getText().replace(/['"]+/g, '')
+        const baseDir = dirname(decl.getSourceFile().getFilePath())
+
+        const candidate = join(baseDir, moduleSpecifier)
+        if(existsSync(candidate + '.ts')) {
+          filePath = candidate + '.ts'
+        }
+        else if(existsSync(join(candidate, 'index.ts'))) {
+          filePath = join(candidate, 'index.ts')
+        }
+        else {
+          filePath = candidate
+        }
+      }
+    }
+
+    filePath = filePath.replace(/\\/g, '/')
+
     let fnNode: FunctionDeclaration | FunctionExpression | ArrowFunction | undefined
-
     if(Node.isFunctionDeclaration(decl) || Node.isFunctionExpression(decl) ||  Node.isArrowFunction(decl)) {
       fnNode = decl
     }
@@ -214,19 +248,12 @@ async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): P
     return filePath
   }
 
-  const r = {
-    inputType: '',
-    inputFilePath: '',
-    responseType: '',
-    responseFilePath: ''
-  }
-
   //extract payload type and filepath
   const [payloadArg] = handlerCall.getTypeArguments()
   const payloadAlias = payloadArg.getType().getAliasSymbol()
 
-  r.inputType = payloadAlias ? getAliasText(payloadAlias) : payloadArg.getText().replace(/\s+/gm, '')
-  r.inputFilePath = payloadAlias ? getAliasFile(payloadAlias) : sf.getFilePath()
+  result.inputType = payloadAlias ? getAliasText(payloadAlias) : payloadArg.getText().replace(/\s+/gm, '')
+  result.inputFilePath = payloadAlias ? getAliasFile(payloadAlias) : sf.getFilePath()
 
   //extract response type and filepath
   const arrow = handlerCall?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
@@ -238,11 +265,11 @@ async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): P
   const responseAlias = responseType.getAliasSymbol()
 
   if (responseAlias) {
-    r.responseType = getAliasText(responseAlias)
-    r.responseFilePath = getAliasFile(responseAlias)
+    result.responseType = getAliasText(responseAlias)
+    result.responseFilePath = getAliasFile(responseAlias)
   }
   else {
-    r.responseType = responseType.getText().replace(/\s+/gm, '')
+    result.responseType = responseType.getText().replace(/\s+/gm, '')
 
     let firstCall: CallExpression | undefined;
     if (Node.isCallExpression(arrow.getBody())) {
@@ -257,26 +284,8 @@ async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): P
       }
     }
 
-    r.responseFilePath = firstCall? getCallDeclFile(firstCall) : sf.getFilePath()
+    result.responseFilePath = firstCall? getCallDeclFile(firstCall) : sf.getFilePath()
   }
-
-  console.log(endpoint, r)
-
-  // const aliasSymbolPayload = handlerCall?.getTypeArguments()[0].getType()?.getAliasSymbol()
-  // result[0] = (aliasSymbolPayload && getAliasText(aliasSymbolPayload)) || handlerCall?.getTypeArguments()[0].getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
-
-  // const arrow = handlerCall?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
-  // let responseType = arrow?.getReturnType().getTypeArguments()[0]
-  // while (responseType?.getSymbol()?.getName() === 'Promise') {
-  //   responseType = responseType.getTypeArguments()[0]
-  // }
-
-  // result[1] = responseType?.getAliasSymbol() && getAliasText(responseType.getAliasSymbol()!) || responseType?.getText().replace(/(\r\n|\n|\r)/gm, '') || 'unknown'
-
-  result.forEach((t, i) => {
-    if(t === 'unknown')
-      warn(`Can't find ${i === 0 ? 'payload' : 'response'} type for endpoint ${endpoint}, it will be unknown`)
-  })
 
   return result
 }
@@ -357,6 +366,10 @@ async function compareWithStore(endpoints: string[]) {
   }
 
   return changed
+}
+
+async function getRelatedFiles(endpoint: string) {
+  return await storage.getItem(endpoint).then(({ et }) => [ et.inputFilePath, et.responseFilePath ])
 }
 
 async function isFolderExists(folder: string) {

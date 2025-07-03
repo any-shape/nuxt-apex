@@ -1,6 +1,11 @@
 import { promises as fs } from 'fs'
-import path, { basename } from 'path'
+import { basename, dirname, join } from 'path'
 import PLimit from 'p-limit'
+import { exit } from 'process'
+
+console.log(join('C:/Users/mykolenkoav/Documents/projects/nuxt-api-generator/playground/.nuxt/types', '../../types/data'));
+
+exit(0)
 
 /**
  * Options for generating fake Nuxt 3 API endpoints
@@ -59,7 +64,7 @@ export async function generateFakeNuxtApi(opts: GenerateOptions): Promise<void> 
   await fs.mkdir(targetDir, { recursive: true })
 
   // Create shared types.ts with header
-  const typesPath = path.join(targetDir, typesFilename)
+  const typesPath = join(targetDir, typesFilename)
   await fs.writeFile(typesPath, generateTypesFileHeader(), 'utf8')
 
   // Parallel limiter
@@ -76,10 +81,10 @@ export async function generateFakeNuxtApi(opts: GenerateOptions): Promise<void> 
 
         const method = pickRandomMethod()
 
-        const fileRelPath = path.join(...segments) + `.${method}.ts`
-        const filePath = path.join(targetDir, fileRelPath)
+        const fileRelPath = join(...segments) + `.${method}.ts`
+        const filePath = join(targetDir, fileRelPath)
 
-        await fs.mkdir(path.dirname(filePath), { recursive: true })
+        await fs.mkdir(dirname(filePath), { recursive: true })
 
         const inputTypeName = await registerInputType(typesPath)
 
