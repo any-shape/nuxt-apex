@@ -13,7 +13,7 @@ export function defineAdwancedEventHandler<D = unknown, T extends EventHandlerRe
 
 
 export function resp() {
-  return getDynmicaData<{c: number, d: string, e: boolean}[]>()
+  return getDynmicaData<{c: number, d: string, u: Array<number>}[]>()
 }
 
 function getDynmicaData<T>() {

@@ -18,7 +18,9 @@ export interface ApiGeneratorModuleOptions {
   /** Composable name prefix (default: 'useTFetch') */
   composableName: string,
   /** @see https://ts-morph.com/setup/ */
-  tsMorphOptions: ProjectOptions
+  tsMorphOptions: ProjectOptions,
+  /**When true, the module will listen for changes in the source files and re-generate the composables (default: true) */
+  listenFildeDependenciesChanges: boolean
 }
 
 type EndpointStructure = {
@@ -50,6 +52,7 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
     sourcePath: 'api',
     outputPath: '.nuxt-api-generator',
     composableName: 'useTFetch',
+    listenFildeDependenciesChanges: true,
     tsMorphOptions: {
       skipFileDependencyResolution: true,
       // skipAddingFilesFromTsConfig: true  // --> much faster, but works only if api files doesn't include types from another files
@@ -112,10 +115,8 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
     }
 
-    const endpoints = await findEndpoints(sourcePath)
-
-    if(endpoints.length > 0) {
-      const result = await Promise.allSettled(endpoints.map(e => limit(() => executor(e))))
+    const executeMany = async (endpoints: string[], isUpdate: boolean = false, isSilent: boolean = true) => {
+      const result = await Promise.allSettled(endpoints.map(e => limit(() => executor(e, isUpdate, isSilent))))
 
       const fulfilled = result.filter(r => r.status === 'fulfilled').map(r => r.value!)
       if(fulfilled.length) success(`Generated ${fulfilled.length} endpoints`)
@@ -125,6 +126,12 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
       for(const err of errors) error(err)
     }
 
+    const endpoints = await findEndpoints(sourcePath)
+
+    if(endpoints.length > 0) {
+      await executeMany(endpoints)
+    }
+
     if(!nuxt.options._prepare && !nuxt.options._build) {
       info('The endpoint change watcher has started successfully')
 
@@ -132,8 +139,20 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
         const isProcessFile = path.includes(sourcePath.split('/').slice(-1 * (options.sourcePath!.split('/').length + 1)).join('/')) && /\.(get|post|put|delete)\.ts$/s.test(path)
         const endpoint = resolve(nuxt.options.rootDir, path).replace(/\\/g, '/')
 
+        if(options.listenFildeDependenciesChanges) {
+          const reversableRelated = (await storage.data()).filter(x => {
+            const u = x.value.et
+            return u.inputFilePath === endpoint || u.responseFilePath === endpoint
+          }).map(x => x.key)
+
+          if(event === 'change' && reversableRelated.length) {
+            await executeMany(reversableRelated, false, false)
+            return
+          }
+        }
+
         if((event === 'change' || event === 'add') && isProcessFile) {
-          executor(endpoint, event === 'change', false)
+          await executor(endpoint, event === 'change', false)
         }
         else if(event === 'unlink' && isProcessFile) {
           await unlink((await storage.getItem(endpoint)).c)
@@ -161,6 +180,11 @@ async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): P
   const sf = _tsProject!.getSourceFile(endpoint) || _tsProject!.addSourceFileAtPath(endpoint)
 
   if(isUpdate) {
+    for (const r of (await getRelatedFiles(endpoint)).filter(r => r !== endpoint)) {
+      const rsf = _tsProject!.getSourceFile(r)
+      if(rsf) _tsProject!.removeSourceFile(rsf) && _tsProject!.addSourceFileAtPath(r)
+    }
+
     await sf.refreshFromFileSystem()
     _tsProject!.resolveSourceFileDependencies()
   }
@@ -369,7 +393,7 @@ async function compareWithStore(endpoints: string[]) {
 }
 
 async function getRelatedFiles(endpoint: string) {
-  return await storage.getItem(endpoint).then(({ et }) => [ et.inputFilePath, et.responseFilePath ])
+  return await storage.getItem(endpoint).then(({ et }) => [ et.inputFilePath, et.responseFilePath ] as string[])
 }
 
 async function isFolderExists(folder: string) {
