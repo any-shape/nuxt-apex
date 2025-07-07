@@ -10,17 +10,19 @@ import storage from 'node-persist'
 import { existsSync } from 'node:fs'
 
 
-export interface ApiGeneratorModuleOptions {
+export interface ApexModuleOptions {
   /** Custom path to the source files (default: 'api') */
   sourcePath: string
-  /** Output path (default: 'node_modules/.nuxt-api-generator/composables') */
+  /** Output path (default: 'node_modules/.nuxt-apex/composables') */
   outputPath: string,
   /** Composable name prefix (default: 'useTFetch') */
   composableName: string,
   /** @see https://ts-morph.com/setup/ */
   tsMorphOptions: ProjectOptions,
   /**When true, the module will listen for changes in the source files and re-generate the composables (default: true) */
-  listenFildeDependenciesChanges: boolean
+  listenFileDependenciesChanges: boolean,
+/**The name of the server event handler (default: 'defineApexHandler')  */
+  serverEventHandlerName: string
 }
 
 type EndpointStructure = {
@@ -37,25 +39,23 @@ type EndpointTypeStructure = {
   responseFilePath: string
 }
 
-let _tsProject: Project | null = null
-let _composableTemplate: string | null = null
-
 const _fileGenIds = new Map<string, number>()
 const { h64Raw } = await xxhash()
 
-export default defineNuxtModule<ApiGeneratorModuleOptions>({
+export default defineNuxtModule<ApexModuleOptions>({
   meta: {
-    name: 'nuxt-api-generator',
-    configKey: 'apiGenerator'
+    name: 'nuxt-apex',
+    configKey: 'apex'
   },
   defaults: {
     sourcePath: 'api',
-    outputPath: '.nuxt-api-generator',
+    outputPath: 'node_modules/.nuxt-apex',
     composableName: 'useTFetch',
-    listenFildeDependenciesChanges: true,
+    listenFileDependenciesChanges: true,
+    serverEventHandlerName: 'defineApexHandler',
     tsMorphOptions: {
       skipFileDependencyResolution: true,
-      // skipAddingFilesFromTsConfig: true  // --> much faster, but works only if api files doesn't include types from another files
+      // skipAddingFilesFromTsConfig: true     // --> much faster, but works only if api files doesn't include types from another files
       // skipLoadingLibFiles: true,            // --> much faster, but works only if api files doesn't include types from another files
       compilerOptions: {
         skipLibCheck: true,
@@ -68,44 +68,33 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
   },
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
-    _tsProject ??= new Project({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
-    _composableTemplate ??= await readFile(resolve(import.meta.dirname, 'runtime/templates/fetch.txt'), 'utf8')
+    const tsProject = new Project({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
+    const composableTemplate = await readFile(resolve(import.meta.dirname, 'runtime/templates/fetch.txt'), 'utf8')
 
-    const outputFolder = resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/composables`).replace(/\\/g, '/')
-    const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath!).replace(/\\/g, '/')
+    const outputFolder = resolve(nuxt.options.rootDir, `${options.outputPath}/composables`).replace(/\\/g, '/')
+    const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath).replace(/\\/g, '/')
     if(!await isFolderExists(sourcePath)) {
       error(`Source path "${sourcePath}" doesn't exist`)
       return
     }
 
-    await storage.init({ dir: resolve(nuxt.options.rootDir, `node_modules/${options.outputPath}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
+    await storage.init({ dir: resolve(nuxt.options.rootDir, `${options.outputPath}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
     const limit = pLimit(50)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
       const id = (_fileGenIds.get(e) || 0) + 1
       _fileGenIds.set(e, id)
 
-      const et = await extractTypesFromEndpoint(e, isUpdate)
-      const es = getEndpointStructure(e, sourcePath, options.sourcePath!)
-
-      const fnCode = _composableTemplate!
-        .replace(/:inputType/g, et.inputType)
-        .replace(/:responseType/g, et.responseType)
-        .replace(/:url/g, `\`${es.url}\``)
-        .replace(/:method/g, `'${es.method}'`)
-        .replace(/:apiNamePrefix/g, options.composableName)
-        .replace(/:apiFnName/g, es.name)
-        .replace(
-          /:inputData/g,
-          (['get', 'delete'].includes(es.method) ? 'params' : 'body') + `: apiGenOmit(data, ${JSON.stringify(es.slugs)})`
-        )
+      const et = await extractTypesFromEndpoint(e, tsProject, options.serverEventHandlerName, isUpdate)
+      const es = getEndpointStructure(e, sourcePath, options.sourcePath)
+      const code = constructComposableCode(composableTemplate, et, es, options.composableName)
 
       const fileName = options.composableName + es.name
       const path = resolve(outputFolder, `${fileName}.ts`).replace(/\\/g, '/')
 
       if(_fileGenIds.get(e) !== id) return
 
-      await createFile(path, fnCode)
+      await createFile(path, code)
       addImports([
         { name: fileName, as: fileName, from: path },
         { name: fileName+'Async', as: fileName+'Async', from: path }
@@ -113,6 +102,8 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
 
       await storage.setItem(e, { c: path, hash: await hashFile(e), et })
       if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
+
+      return true
     }
 
     const executeMany = async (endpoints: string[], isUpdate: boolean = false, isSilent: boolean = true) => {
@@ -139,7 +130,7 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
         const isProcessFile = path.includes(sourcePath.split('/').slice(-1 * (options.sourcePath!.split('/').length + 1)).join('/')) && /\.(get|post|put|delete)\.ts$/s.test(path)
         const endpoint = resolve(nuxt.options.rootDir, path).replace(/\\/g, '/')
 
-        if(options.listenFildeDependenciesChanges) {
+        if(options.listenFileDependenciesChanges) {
           const reversableRelated = (await storage.data()).filter(x => {
             const u = x.value.et
             return u.inputFilePath === endpoint || u.responseFilePath === endpoint
@@ -152,11 +143,21 @@ export default defineNuxtModule<ApiGeneratorModuleOptions>({
         }
 
         if((event === 'change' || event === 'add') && isProcessFile) {
-          await executor(endpoint, event === 'change', false)
+          try {
+            await executor(endpoint, event === 'change', false)
+          }
+          catch (err) {
+            error(`Error during generation: ${(err as Error).message}`)
+          }
         }
         else if(event === 'unlink' && isProcessFile) {
-          await unlink((await storage.getItem(endpoint)).c)
-          await storage.removeItem(endpoint)
+          try {
+            await unlink((await storage.getItem(endpoint)).c)
+            await storage.removeItem(endpoint)
+          }
+          catch (err) {
+            error(`Error during deletion: ${(err as Error).message}`)
+          }
         }
       })
     }
@@ -170,23 +171,24 @@ async function findEndpoints(apiDir: string) {
   return await compareWithStore(endpoints)
 }
 
-async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): Promise<EndpointTypeStructure> {
+export async function extractTypesFromEndpoint(endpoint: string, tsProject: Project, handlerName: string, isUpdate?: boolean): Promise<EndpointTypeStructure> {
   const result: EndpointTypeStructure = {
     inputType: 'unknown',
     inputFilePath: 'unknown',
     responseType: 'unknown',
     responseFilePath: 'unknown'
   }
-  const sf = _tsProject!.getSourceFile(endpoint) || _tsProject!.addSourceFileAtPath(endpoint)
+
+  const sf = tsProject.getSourceFile(endpoint) || tsProject.addSourceFileAtPath(endpoint)
 
   if(isUpdate) {
     for (const r of (await getRelatedFiles(endpoint)).filter(r => r !== endpoint)) {
-      const rsf = _tsProject!.getSourceFile(r)
-      if(rsf) _tsProject!.removeSourceFile(rsf) && _tsProject!.addSourceFileAtPath(r)
+      const rsf = tsProject.getSourceFile(r)
+      if(rsf) tsProject.removeSourceFile(rsf) && tsProject.addSourceFileAtPath(r)
     }
 
     await sf.refreshFromFileSystem()
-    _tsProject!.resolveSourceFileDependencies()
+    tsProject.resolveSourceFileDependencies()
   }
 
   const handlerCall = sf.getExportAssignment(exp => {
@@ -194,11 +196,11 @@ async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): P
     if (!expression) return false
 
     const id = expression.getExpressionIfKind(SyntaxKind.Identifier)
-    return !!id && /^defineAdwancedEventHandler$/s.test(id?.getText() || '')
+    return !!id && new RegExp(handlerName, 's').test(id?.getText() || '')
   })?.getExpressionIfKind(SyntaxKind.CallExpression)
 
   if (!handlerCall) {
-    throw new Error(`No defineAdwancedEventHandler found in ${endpoint}`)
+    throw new Error(`No ${handlerName} found in ${endpoint}`)
   }
 
   function resolveAlias(sym: Symbol): Symbol {
@@ -314,7 +316,7 @@ async function extractTypesFromEndpoint(endpoint: string, isUpdate?: boolean): P
   return result
 }
 
-function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: string): EndpointStructure {
+export function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: string): EndpointStructure {
   const d = {
     get: 'get',
     post: 'create',
@@ -351,8 +353,22 @@ function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: str
     url,
     slugs,
     method,
-    name: namePath + capitalize(name)
+    name: (namePath + capitalize(name)).split('-').map((x, i) => { if(i === 0) return x; return capitalize(x); }).join('')
   }
+}
+
+export function constructComposableCode(template: string, et: EndpointTypeStructure, es: EndpointStructure, composableName: string) {
+  return template
+    .replace(/:inputType/g, et.inputType)
+    .replace(/:responseType/g, et.responseType)
+    .replace(/:url/g, `\`${es.url}\``)
+    .replace(/:method/g, `'${es.method}'`)
+    .replace(/:apiNamePrefix/g, composableName)
+    .replace(/:apiFnName/g, es.name)
+    .replace(
+      /:inputData/g,
+      (['get', 'delete'].includes(es.method) ? 'params' : 'body') + `: apiGenOmit(data, ${JSON.stringify(es.slugs)})`
+    )
 }
 
 async function createFile(path: string, content: string) {
@@ -406,5 +422,5 @@ async function isFolderExists(folder: string) {
 }
 
 function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }

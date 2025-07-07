@@ -3,10 +3,6 @@ import { basename, dirname, join } from 'path'
 import PLimit from 'p-limit'
 import { exit } from 'process'
 
-console.log(join('C:/Users/mykolenkoav/Documents/projects/nuxt-api-generator/playground/.nuxt/types', '../../types/data'));
-
-exit(0)
-
 /**
  * Options for generating fake Nuxt 3 API endpoints
  */
@@ -41,11 +37,11 @@ const OUTPUT_MAX_PROPS = 10
 let inputTypeCounter = 0
 
 await generateFakeNuxtApi({
-  targetDir: 'playground/server/api-500',
-  maxDepth: 7,
-  endpointCount: 500,
+  targetDir: 'playground/server/api',
+  maxDepth: 5,
+  endpointCount: 25,
   typesFilename: 'types.d.ts',
-  concurrency: 8,
+  concurrency: 20,
 })
 
 /**
@@ -264,7 +260,7 @@ function randomOutputKey(idx: number): string {
 
 /** Template the endpoint file content */
 function buildEndpointFile(inputTypeName: string, outputLiteral: string, targetDir: string): string {
-  return `import {${inputTypeName}} from '~/server/${basename(targetDir)}/types'\nexport default defineAdwancedEventHandler<${inputTypeName}>(async (data) => {\n  return ${outputLiteral}\n})\n`
+  return `import {${inputTypeName}} from '~/server/${basename(targetDir)}/types'\nexport default defineApexHandler<${inputTypeName}>(async (data) => {\n  return ${outputLiteral}\n})\n`
 }
 
 /** Random integer between min and max inclusive */

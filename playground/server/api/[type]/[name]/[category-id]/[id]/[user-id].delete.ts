@@ -1,0 +1,4 @@
+import {Input18} from '~/server/api/types'
+export default defineApexHandler<Input18>(async (data) => {
+  return { "data": [ "xlnvm0", [ { "data": { "data": { "data": [ "do203s", { "data": true } ], "result1": { "data": { "data": 41 } } }, "result1": { "data": true, "result1": [ { "data": 11 }, { "data": 14 }, { "data": true } ] } }, "result1": { "data": { "data": "6jxh5h" }, "result1": false, "items2": { "data": { "data": {  } }, "result1": "dmdboz" } } }, { "data": [ [ false ], { "data": "liefly" }, 96 ] }, "zkvjw6" ], 76 ], "result1": false, "items2": { "data": [ [ { "data": [ { "data": [ 77 ], "result1": [ "3imr3h", "dfaeph", true ] } ], "result1": { "data": true, "result1": { "data": true } } }, { "data": { "data": [ "ssf7fv" ] }, "result1": 48 } ] ], "result1": "9cycxd", "items2": "wt1h8p" } }
+})

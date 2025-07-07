@@ -1,3 +1,3 @@
-export default defineAdwancedEventHandler<{ test: number, tst3: string }>(async data => {
+export default defineApexHandler<{ test: number, tst3: string }>(async data => {
   return resp()
 })
