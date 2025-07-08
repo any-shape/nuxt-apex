@@ -10,12 +10,3 @@ export function defineApexHandler<D = unknown, T extends EventHandlerRequest = E
     }
   })
 }
-
-
-export function resp() {
-  return getDynmicaData<{c: number, d: string, u: Array<number>}[]>()
-}
-
-function getDynmicaData<T>() {
-  return [] as T
-}

@@ -1,13 +1,13 @@
 import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
 import { normalize, dirname, join } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
-import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode } from 'ts-morph'
+import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
-import { info, error, success } from './logger'
 import storage from 'node-persist'
 import { existsSync } from 'node:fs'
+import { info, error, success, warn } from './logger.ts'
 
 
 export interface ApexModuleOptions {
@@ -22,7 +22,9 @@ export interface ApexModuleOptions {
   /**When true, the module will listen for changes in the source files and re-generate the composables (default: true) */
   listenFileDependenciesChanges: boolean,
 /**The name of the server event handler (default: 'defineApexHandler')  */
-  serverEventHandlerName: string
+  serverEventHandlerName: string,
+  /** The path to the tsconfig.json file */
+  tsConfigFilePath?: string
 }
 
 type EndpointStructure = {
@@ -39,6 +41,25 @@ type EndpointTypeStructure = {
   responseFilePath: string
 }
 
+export const DEFAULTS = {
+  sourcePath: 'api',
+  outputPath: 'node_modules/.nuxt-apex',
+  composableName: 'useTFetch',
+  listenFileDependenciesChanges: true,
+  serverEventHandlerName: 'defineApexHandler',
+  tsConfigFilePath: undefined,
+  tsMorphOptions: {
+    skipFileDependencyResolution: true,
+    compilerOptions: {
+      skipLibCheck: true,
+      allowJs: false,
+      declaration: false,
+      noEmit: true,
+      preserveConstEnums: false,
+    },
+  }
+}
+
 const _fileGenIds = new Map<string, number>()
 const { h64Raw } = await xxhash()
 
@@ -47,28 +68,17 @@ export default defineNuxtModule<ApexModuleOptions>({
     name: 'nuxt-apex',
     configKey: 'apex'
   },
-  defaults: {
-    sourcePath: 'api',
-    outputPath: 'node_modules/.nuxt-apex',
-    composableName: 'useTFetch',
-    listenFileDependenciesChanges: true,
-    serverEventHandlerName: 'defineApexHandler',
-    tsMorphOptions: {
-      skipFileDependencyResolution: true,
-      // skipAddingFilesFromTsConfig: true     // --> much faster, but works only if api files doesn't include types from another files
-      // skipLoadingLibFiles: true,            // --> much faster, but works only if api files doesn't include types from another files
-      compilerOptions: {
-        skipLibCheck: true,
-        allowJs: false,
-        declaration: false,
-        noEmit: true,
-        preserveConstEnums: false,
-      },
-    }
-  },
+  defaults: DEFAULTS,
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
-    const tsProject = new Project({ tsConfigFilePath: resolve(nuxt.options.serverDir, 'tsconfig.json').replace(/\\/g, '/'), ...options.tsMorphOptions })
+
+    const tsConfigFilePath = (DEFAULTS.tsConfigFilePath || resolve(nuxt.options.serverDir, 'tsconfig.json')).replace(/\\/g, '/')
+    if(!existsSync(tsConfigFilePath)) {
+      warn(`tsconfig.json not found in ${nuxt.options.serverDir}. Skipping...`)
+      return
+    }
+
+    const tsProject = new Project({ tsConfigFilePath, ...options.tsMorphOptions })
     const composableTemplate = await readFile(resolve(import.meta.dirname, 'runtime/templates/fetch.txt'), 'utf8')
 
     const outputFolder = resolve(nuxt.options.rootDir, `${options.outputPath}/composables`).replace(/\\/g, '/')
