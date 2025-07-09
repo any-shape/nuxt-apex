@@ -1,52 +1,52 @@
 // Auto-generated types file
 
-export type Input1 = Omit<{ price:number; createdAt:string; status:string; age:number; isActive:boolean; }, 'createdAt'> & Partial<{ count:number; isActive:boolean; }>
+export interface Input1 { price:number; updatedAt:string; 'id': string; }
 
-export interface Input3 { status:string; updatedAt:string; }
+export type Input2 = {'user-id': string}&{ updatedAt:string; createdAt:string; } & { name:string; count:number; }
 
-export type Input2 = Omit<{ updatedAt:string; email:string; title:string; name:string; isActive:boolean; }, 'updatedAt'> & Partial<{ createdAt:string; count:number; }>
+export interface Input3 { name:string; status:string; email:string; 'user-id': string; }
 
-export type Input4 = Omit<{ createdAt:string; status:string; isActive:boolean; updatedAt:string; }, 'createdAt'> & Partial<{ age:number; name:string; }>
+export interface Input4 { isActive:boolean; title:string; }
 
-export type Input5 = { count:number; name:string; email:string; } | { title:string; createdAt:string; isActive:boolean; }
+export interface Input5 { email:string; isActive:boolean; 'user-id': string; }
 
-export type Input6 = Omit<{ price:number; status:string; createdAt:string; title:string; email:string; updatedAt:string; }, 'updatedAt'> & Partial<{ age:number; }>
+export interface Input6 { price:number; age:number; createdAt:string; }
 
-export type Input7 = Omit<{ isActive:boolean; updatedAt:string; age:number; }, 'age'> & Partial<{ count:number; }>
+export interface Input7 { email:string; name:string; 'user-id': string; 'category-id': string; }
 
-export interface Input8 { createdAt:string; name:string; }
+export interface Input9 { title:string; email:string; 'user-id': string; }
 
-export type Input9 = Omit<{ isActive:boolean; createdAt:string; updatedAt:string; title:string; price:number; }, 'price'> & Partial<{ price:number; age:number; updatedAt:string; }>
+export interface Input8 { status:string; createdAt:string; updatedAt:string; 'user-id': string; }
 
-export interface Input10 { count:number; status:string; }
+export type Input10 = {'user-id': string,'category-id': string}&{ updatedAt:string; createdAt:string; } & { isActive:boolean; count:number; }
 
-export type Input11 = { age:number; isActive:boolean; status:string; } | { email:string; createdAt:string; updatedAt:string; }
+export interface Input12 { email:string; count:number; age:number; 'user-id': string; 'vid': string; 'name': string; }
 
-export type Input12 = Omit<{ email:string; createdAt:string; updatedAt:string; status:string; isActive:boolean; }, 'createdAt'> & Partial<{ updatedAt:string; age:number; }>
+export type Input11 = {'uid': string}&{ updatedAt:string; name:string; title:string; } | { count:number; isActive:boolean; }
 
-export type Input13 = { createdAt:string; isActive:boolean; } & { status:string; price:number; }
+export interface Input13 { count:number; createdAt:string; 'pid': string; }
 
-export interface Input14 { updatedAt:string; count:number; name:string; }
+export interface Input14 { count:number; email:string; createdAt:string; 'user-id': string; 'category-id': string; 'pid': string; }
 
-export type Input15 = Omit<{ updatedAt:string; name:string; createdAt:string; title:string; }, 'title'> & Partial<{ status:string; count:number; }>
+export type Input15 = {'id': string,'variant-id': string}&Omit<{ email:string; status:string; updatedAt:string; title:string; }, 'email'> & Partial<{ age:number; }>
 
-export type Input16 = { age:number; count:number; title:string; } | { status:string; createdAt:string; }
+export interface Input17 { email:string; title:string; price:number; 'user-id': string; 'vid': string; }
 
-export type Input17 = { age:number; title:string; count:number; } | { email:string; createdAt:string; }
+export interface Input16 { isActive:boolean; createdAt:string; 'post-id': string; 'name': string; }
 
-export type Input18 = { email:string; createdAt:string; } & { age:number; }
+export type Input18 = Omit<{ title:string; status:string; count:number; age:number; email:string; price:number; name:string; }, 'status'> & Partial<{ updatedAt:string; price:number; }>
 
-export type Input19 = Omit<{ price:number; title:string; name:string; }, 'price'> & Partial<{ age:number; isActive:boolean; }>
+export interface Input19 { price:number; updatedAt:string; 'user-id': string; 'category-id': string; }
 
-export type Input20 = { createdAt:string; isActive:boolean; } | { count:number; price:number; }
+export type Input20 = {'user-id': string,'category-id': string,'pid': string,'uid': string,'slug': string}&{ updatedAt:string; price:number; } | { email:string; count:number; }
 
-export type Input21 = Omit<{ email:string; createdAt:string; name:string; age:number; updatedAt:string; }, 'updatedAt'> & Partial<{ email:string; createdAt:string; isActive:boolean; }>
+export interface Input21 { isActive:boolean; updatedAt:string; 'user-id': string; 'pid': string; }
 
-export type Input22 = Omit<{ createdAt:string; count:number; price:number; age:number; status:string; title:string; updatedAt:string; }, 'createdAt'> & Partial<{ name:string; }>
+export type Input22 = {'user-id': string,'category-id': string,'pid': string}&Omit<{ age:number; count:number; updatedAt:string; status:string; isActive:boolean; }, 'status'> & Partial<{ title:string; }>
 
-export type Input23 = Omit<{ title:string; updatedAt:string; name:string; createdAt:string; age:number; }, 'name'> & Partial<{ price:number; }>
+export interface Input23 { email:string; updatedAt:string; 'category-id': string; }
 
-export type Input24 = { name:string; age:number; price:number; } & { isActive:boolean; createdAt:string; }
+export type Input24 = Omit<{ price:number; email:string; count:number; createdAt:string; isActive:boolean; }, 'email'> & Partial<{ email:string; name:string; }>
 
-export type Input25 = { age:number; price:number; } | { email:string; title:string; }
+export interface Input25 { title:string; price:number; 'user-id': string; }
 

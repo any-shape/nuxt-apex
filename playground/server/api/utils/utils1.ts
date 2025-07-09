@@ -1,12 +1,10 @@
 // Auto-generated utils
 
 export function randomData1(data: any) {
-  const { 'order-id' as orderId, category-id } = data;
-  return { order-id, category-id, ...{ "data": true } };
+  return { 'user-id': data['user-id'], 'uid': data['uid'], ...{ "data": { "data": false, "result1": 46 }, "result1": "x473c5" } };
 }
 
 export function randomData2(data: any) {
-  const { id } = data;
-  return { id, ...{ "data": false, "result1": { "data": 3 } } };
+  return { 'user-id': data['user-id'], ...{ "data": { "data": true }, "result1": [ "e4lrq0" ] } };
 }
 

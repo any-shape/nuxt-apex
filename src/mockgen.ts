@@ -76,6 +76,9 @@ export async function generateFakeNuxtApi(opts: GenerateOptions): Promise<void> 
   // Collect return mapping
   const returnMapping: Record<string, any> = {};
 
+  // Track which slug keys are used per parent directory to avoid multiple slug siblings
+  const slugUsage = new Map<string, string>()
+
   // Parallel limiter
   const limit = PLimit(concurrency)
   let written = 0
@@ -86,8 +89,27 @@ export async function generateFakeNuxtApi(opts: GenerateOptions): Promise<void> 
     tasks.push(
       limit(async () => {
         const depth = getRandomInt(1, maxDepth)
-        const segments = buildRandomSegments(depth)
 
+        const segments: string[] = []
+        let parentPath = ''
+        for (let i = 0; i < depth; i++) {
+          if (Math.random() < 0.5) {
+            let key: string
+            if (slugUsage.has(parentPath)) {
+              key = slugUsage.get(parentPath)!
+            } else {
+              key = SLUG_KEYS[getRandomInt(0, SLUG_KEYS.length - 1)]
+              slugUsage.set(parentPath, key)
+            }
+            segments.push(`[${key}]`)
+          } else {
+            const seg = STATIC_SEGMENTS[getRandomInt(0, STATIC_SEGMENTS.length - 1)]
+            segments.push(seg)
+          }
+          parentPath = parentPath ? `${parentPath}/${segments[i]}` : segments[i]
+        }
+
+        const slugKeys = segments.filter(s=>/^\[.*\]$/.test(s)).map(s=>s.slice(1,-1))
         const method = pickRandomMethod()
 
         const fileRel = join(...segments) + `.${method}.ts`
@@ -95,7 +117,7 @@ export async function generateFakeNuxtApi(opts: GenerateOptions): Promise<void> 
 
         await fs.mkdir(dirname(filePath), { recursive: true })
 
-        const [inputTypeName, payload] = await registerInputType(typesPath)
+        const [inputTypeName, payload] = await registerInputType(typesPath, slugKeys)
 
         // Decide on util usage
         let content: string
@@ -177,8 +199,7 @@ async function setupUtils(targetDir: string, endpointCount: number): Promise<Uti
       };
 
       buf += `export function ${name}(data: any) {\n`;
-      buf += `  const { ${keys.join(', ')} } = data;\n`;
-      buf += `  return { ${keys.join(', ')}, ...${staticCode} };\n`;
+      buf += `  return { ${keys.map((k) => `'${k}': data['${k}']`).join(', ') }, ...${staticCode} };\n`;
       buf += `}\n\n`;
 
       specs.push({ file, name, staticMapping });
@@ -212,25 +233,6 @@ function pickRandomUnique(arr: string[], count: number): string[] {
   return out;
 }
 
-/**
- * Build random path segments mixing static and dynamic slugs
- */
-function buildRandomSegments(depth: number): string[] {
-  const segments: string[] = []
-  for (let i = 0; i < depth; i++) {
-    if (Math.random() < 0.5) {
-      // dynamic slug
-      const key = SLUG_KEYS[getRandomInt(0, SLUG_KEYS.length - 1)]
-      segments.push(`[${key}]`)
-    } else {
-      // static segment
-      const seg = STATIC_SEGMENTS[getRandomInt(0, STATIC_SEGMENTS.length - 1)]
-      segments.push(seg)
-    }
-  }
-  return segments
-}
-
 /** Choose one of the four HTTP methods */
 function pickRandomMethod(): 'get' | 'post' | 'put' | 'delete' {
   const methods = ['get', 'post', 'put', 'delete'] as const
@@ -240,10 +242,10 @@ function pickRandomMethod(): 'get' | 'post' | 'put' | 'delete' {
 /**
  * Append a new Input interface or type to types.ts and return its unique name
  */
-async function registerInputType(typesPath: string): Promise<[string, string]> {
+async function registerInputType(typesPath: string, slugKeys: string[]): Promise<[string, string]> {
   inputTypeCounter++
   const typeName = `Input${inputTypeCounter}`
-  const { kind, def } = generateInputTypeSpec()
+  const { kind, def } = generateInputTypeSpec(slugKeys)
   let content: string
   if (kind === 'interface') {
     content = `export interface ${typeName} ${def}\n\n`
@@ -273,29 +275,23 @@ function generateFakePayload(def: string): any {
 }
 
 /** Decide type variant and definition */
-function generateInputTypeSpec(): { kind: 'interface' | 'type'; def: string } {
+function generateInputTypeSpec(slugKeys: string[]): { kind: 'interface' | 'type'; def: string } {
   const r = Math.random()
+  const slugs =  slugKeys.length ? '{'+slugKeys.map(k => `'${k}': string`).join()+'}&' : ''
+
   if (r < 0.4) {
-    return { kind: 'interface', def: generateSimpleType() }
+    return { kind: 'interface', def: generateSimpleType(slugKeys) }
   } else if (r < 0.8) {
-    return { kind: 'type', def: generateMediumType() }
+    return { kind: 'type', def: slugs + generateMediumType() }
   } else {
-    return { kind: 'type', def: generateComplexType() }
+    return { kind: 'type', def: slugs + generateComplexType() }
   }
 }
 
-/** Decide type complexity and delegate */
-function generateInputTypeDefinition(): string {
-  const r = Math.random()
-  if (r < 0.4) return generateSimpleType()
-  if (r < 0.8) return generateMediumType()
-  return generateComplexType()
-}
-
 /** Simple object with 2–3 props */
-function generateSimpleType(): string {
+function generateSimpleType(slugKeys: string[]): string {
   const count = getRandomInt(2, 3)
-  const props = generateProps(count)
+  const props = [...generateProps(count), ...slugKeys.map(k => `'${k}': string;`)]
   return `{ ${props.join(' ')} }`
 }
 

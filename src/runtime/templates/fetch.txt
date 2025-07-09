@@ -1,3 +1,4 @@
-import { useFetch } from 'nuxt/app'
+import {useFetch} from 'nuxt/app'
+import {apiGenOmit} from './_omit'
 export const :apiNamePrefix:apiFnName = <T=:inputType>(data: T) => useFetch<:responseType>(:url, { method: :method, :inputData })
 export const :apiNamePrefix:apiFnNameAsync = <T=:inputType>(data: T) => $fetch<:responseType>(:url, { method: :method, :inputData })

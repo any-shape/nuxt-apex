@@ -7,17 +7,12 @@ type ModuleMap = {
 }
 
 const registry = Object.entries(modules).reduce((acc, [path, mod]) => {
-  // assume each file exports a single default-named composable
-  // e.g. export function useMyComposable(...) { … }
   Object.assign(acc, mod as any)
   return acc
 }, {} as ModuleMap)
 
-export function invokeComposable<K extends keyof ModuleMap>(
-  name: K,
-  params: Parameters<ModuleMap[K]>
-): ReturnType<ModuleMap[K]> {
-  const fn = registry[name]
+export function invokeComposable<K extends keyof ModuleMap>(name: K, params: Parameters<ModuleMap[K]>): ReturnType<ModuleMap[K]> {
+  const fn = registry[name] as Function
   if (!fn) throw new Error(`Composable "${name}" not found`)
   return fn(...(params as any))
 }

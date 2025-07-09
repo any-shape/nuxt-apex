@@ -1,10 +1,9 @@
 <template>
   <div>
-    Nuxt module playground!
-    {{ y }}
+    {{ data }}
   </div>
 </template>
 
 <script setup lang="ts">
-
+  const { data } = useTFetchUserIdCategoryIdPidOrdersGet
 </script>

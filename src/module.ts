@@ -1,6 +1,6 @@
 import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
-import { normalize, dirname, join } from 'node:path'
-import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
+import { normalize, dirname, join, basename } from 'node:path'
+import { mkdir, readFile, unlink, writeFile, rm, rename, access, copyFile } from 'node:fs/promises'
 import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
@@ -79,7 +79,7 @@ export default defineNuxtModule<ApexModuleOptions>({
     }
 
     const tsProject = new Project({ tsConfigFilePath, ...options.tsMorphOptions })
-    const composableTemplate = await readFile(resolve(import.meta.dirname, 'runtime/templates/fetch.txt'), 'utf8')
+    const composableTemplate = await readFile(resolve('./runtime/templates/fetch.txt'), 'utf8')
 
     const outputFolder = resolve(nuxt.options.rootDir, `${options.outputPath}/composables`).replace(/\\/g, '/')
     const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath).replace(/\\/g, '/')
@@ -103,12 +103,7 @@ export default defineNuxtModule<ApexModuleOptions>({
       const path = resolve(outputFolder, `${fileName}.ts`).replace(/\\/g, '/')
 
       if(_fileGenIds.get(e) !== id) return
-
       await createFile(path, code)
-      addImports([
-        { name: fileName, as: fileName, from: path },
-        { name: fileName+'Async', as: fileName+'Async', from: path }
-      ])
 
       await storage.setItem(e, { c: path, hash: await hashFile(e), et })
       if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
@@ -172,7 +167,14 @@ export default defineNuxtModule<ApexModuleOptions>({
       })
     }
 
-    addImportsDir(['utils'].map(d => resolve(`./runtime/${d}`)))
+    await copyFile(resolve('./runtime/templates/omit.txt'), resolve(outputFolder, '_omit.ts'))
+    for (const path of await glob(`**/${options.composableName}*.ts`, { cwd: outputFolder, absolute: true })) {
+      const name = basename(path, '.ts')
+      addImports([
+        { name, as: name, from: path },
+        { name: name+'Async', as: name+'Async', from: path }
+      ])
+    }
   }
 })
 
@@ -354,7 +356,7 @@ export function getEndpointStructure(endpoint: string, sourcePath: string, baseU
       const slug = p.replaceAll(/\[|\]/g, '')
       slugs.push(slug)
 
-      return '${data.' + slug + '}'
+      return `\${data['${slug}']}`
     }
     else return p
   }).join('/')).replace(/\\/g, '/')
