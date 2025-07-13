@@ -24,7 +24,9 @@ export interface ApexModuleOptions {
 /**The name of the server event handler (default: 'defineApexHandler')  */
   serverEventHandlerName: string,
   /** The path to the tsconfig.json file */
-  tsConfigFilePath?: string
+  tsConfigFilePath?: string,
+  /** Ignore endpoints by relative path, e.g. api/some-endpoint.ts (default: []) */
+  ignore?: string[],
 }
 
 type EndpointStructure = {
@@ -48,6 +50,7 @@ export const DEFAULTS = {
   listenFileDependenciesChanges: true,
   serverEventHandlerName: 'defineApexHandler',
   tsConfigFilePath: undefined,
+  ignore: [],
   tsMorphOptions: {
     skipFileDependencyResolution: true,
     compilerOptions: {
@@ -122,7 +125,7 @@ export default defineNuxtModule<ApexModuleOptions>({
       for(const err of errors) error(err)
     }
 
-    const endpoints = await findEndpoints(sourcePath)
+    const endpoints = await findEndpoints(sourcePath, options.ignore?.map(x => '!' + resolve(nuxt.options.serverDir, x).replace(/\\/g, '/')))
 
     if(endpoints.length > 0) {
       await executeMany(endpoints)
@@ -178,8 +181,8 @@ export default defineNuxtModule<ApexModuleOptions>({
   }
 })
 
-async function findEndpoints(apiDir: string) {
-  const endpoints = await glob('**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })
+async function findEndpoints(apiDir: string, ignoreEndpoints: string[] = []) {
+  const endpoints = await glob(['**/*.(get|post|put|delete).ts', ...ignoreEndpoints], { cwd: apiDir, absolute: true })
   return await compareWithStore(endpoints)
 }
 

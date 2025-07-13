@@ -43,6 +43,7 @@ const OUTPUT_MAX_PROPS = 10
 // Counter for unique Input type names
 let inputTypeCounter = 0
 
+//@ts-expect-error
 await generateFakeNuxtApi({
   targetDir: 'playground/server/api',
   maxDepth: 5,
@@ -262,29 +263,31 @@ async function registerInputType(typesPath: string, slugKeys: string[]): Promise
  * Generate a fake payload from a TS type definition string
  */
 function generateFakePayload(def: string): any {
-  const payload: any = {};
-  const regex = new RegExp('([A-Za-z0-9_]+)\s*:\s*(string|number|boolean);','g');
-  let match;
+  const payload: any = {}
+
+  const regex = /([A-Za-z0-9_'-]+)\s*:\s*(string|number|boolean);/g
+  let match: RegExpExecArray | null
+
   while ((match = regex.exec(def)) !== null) {
-    const [, key, type] = match;
-    if (type === 'string') payload[key] = Math.random().toString(36).substring(2, 8);
-    else if (type === 'number') payload[key] = getRandomInt(0, 100);
-    else if (type === 'boolean') payload[key] = Math.random() < 0.5;
+    const [, key, type] = match
+
+    if (type === 'string') payload[key] = Math.random().toString(36).substring(2, 8)
+    else if (type === 'number') payload[key] = getRandomInt(0, 100)
+    else if (type === 'boolean') payload[key] = Math.random() < 0.5
   }
-  return payload;
+  return payload
 }
 
 /** Decide type variant and definition */
 function generateInputTypeSpec(slugKeys: string[]): { kind: 'interface' | 'type'; def: string } {
   const r = Math.random()
-  const slugs =  slugKeys.length ? '{'+slugKeys.map(k => `'${k}': string`).join()+'}&' : ''
 
   if (r < 0.4) {
     return { kind: 'interface', def: generateSimpleType(slugKeys) }
   } else if (r < 0.8) {
-    return { kind: 'type', def: slugs + generateMediumType() }
+    return { kind: 'type', def: generateMediumType(slugKeys) }
   } else {
-    return { kind: 'type', def: slugs + generateComplexType() }
+    return { kind: 'type', def: generateComplexType(slugKeys) }
   }
 }
 
@@ -296,44 +299,53 @@ function generateSimpleType(slugKeys: string[]): string {
 }
 
 /** 3–6 props with union or intersection */
-function generateMediumType(): string {
+function generateMediumType(slugKeys: string[]): string {
   const count = getRandomInt(3, 6)
   const props = generateProps(count)
   const half = Math.ceil(count / 2)
   const first = props.slice(0, half).join(' ')
   const second = props.slice(half).join(' ')
   const op = Math.random() < 0.5 ? '&' : '|'
-  return `{ ${first} } ${op} { ${second} }`
+  const sl = slugKeys.length ? `{${slugKeys.map(k => `'${k}': string;`).join('')}}&` : ''
+  return `${sl} { ${first} } ${op} { ${second} }`
 }
 
 /** Complex type using Omit and Partial */
-function generateComplexType(): string {
+function generateComplexType(slugKeys: string[]): string {
   const count = getRandomInt(3, 8)
   const props = generateProps(count)
   const omitProp = props[getRandomInt(0, props.length - 1)].split(':')[0]
   const base = `{ ${props.join(' ')} }`
   const partialCount = getRandomInt(1, 3)
   const partial = `{ ${generateProps(partialCount).join(' ')} }`
-  return `Omit<${base}, '${omitProp}'> & Partial<${partial}>`
+  const sl = slugKeys.length ? `{${slugKeys.map(k => `'${k}': string;`).join('')}}&` : ''
+  return `Omit<${base}, '${omitProp}'> & ${sl} Partial<${partial}>`
 }
 
 /** Pick unique props from a predefined pool */
 function generateProps(count: number): string[] {
   const pool = [
-    'name:string;', 'title:string;', 'count:number;',
-    'isActive:boolean;', 'createdAt:string;', 'updatedAt:string;',
-    'email:string;', 'age:number;', 'status:string;', 'price:number;'
+    'title:string;',
+    'count:number;',
+    'isActive:boolean;',
+    'createdAt:string;',
+    'updatedAt:string;',
+    'email:string;',
+    'age:number;',
+    'status:string;',
+    'price:number;',
+    'productId:string;',
+    'viewId:string;',
+    'itemId:string;',
+    'prevId:string;',
+    'nextId:string;',
+    'innerId:string;',
+    'outerId:string;'
   ]
-  const props: string[] = []
-  const used = new Set<number>()
-  while (props.length < count) {
-    const idx = getRandomInt(0, pool.length - 1)
-    if (!used.has(idx)) {
-      used.add(idx)
-      props.push(pool[idx])
-    }
-  }
-  return props
+
+  const uniquePool = Array.from(new Set(pool))
+  const shuffled = shuffle(uniquePool)
+  return shuffled.slice(0, Math.min(count, shuffled.length))
 }
 
 /** Generate a random JS literal with nested objects/arrays */
@@ -382,4 +394,13 @@ function randomOutputKey(idx: number): string {
 /** Random integer between min and max inclusive */
 function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }

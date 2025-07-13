@@ -1,4 +1,4 @@
-const modules = import.meta.glob('../node_modules/', { eager: true })
+const modules = import.meta.glob('../node_modules/.nuxt-apex/composables/useTFetch*.ts', { eager: true })
 
 type ModuleMap = {
   [P in keyof typeof modules as keyof typeof modules[P]]: (
@@ -11,8 +11,9 @@ const registry = Object.entries(modules).reduce((acc, [path, mod]) => {
   return acc
 }, {} as ModuleMap)
 
-export function invokeComposable<K extends keyof ModuleMap>(name: K, params: Parameters<ModuleMap[K]>): ReturnType<ModuleMap[K]> {
-  const fn = registry[name] as Function
+export async function invokeComposable<K extends keyof ModuleMap>(name: K, params: Parameters<ModuleMap[K]>): Promise<ReturnType<ModuleMap[K]>> {
+  // @ts-ignore
+  const fn = registry['useTFetch'+name+'Async'] as Function
   if (!fn) throw new Error(`Composable "${name}" not found`)
-  return fn(...(params as any))
+  return fn(params)
 }

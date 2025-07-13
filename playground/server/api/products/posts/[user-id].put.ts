@@ -1,0 +1,4 @@
+import {Input9} from '~/server/api/types.d';
+export default defineApexHandler<Input9>(async (data) => {
+  return { "data": { "data": 15, "result1": true, "items2": { "data": [ [ 95, [ "x7vl1w", "l0k8of" ] ] ], "result1": [ { "data": [ false, [ [ true, "ji1cys", 43 ], [ false, "10u1kh" ], "3ioknd" ], "zqy9u1" ] }, false ], "items2": { "data": { "data": {  } }, "result1": { "data": 49 } } } }, "result1": { "data": { "data": { "data": [ [ 47, { "data": [ false, "e89ycn" ] }, [ [ "o8srqd" ], [ true ], true ] ], { "data": [ { "data": 78 }, [ 17, 28, 49 ] ] } ], "result1": { "data": 34 } }, "result1": [ [ false, { "data": [ { "data": false }, true, { "data": false } ], "result1": 76 }, { "data": { "data": {  } }, "result1": { "data": [ "y0dit4", "y92pmy" ] }, "items2": [ [ false, 44 ], false, { "data": true } ] } ], { "data": { "data": false } }, [ "f02o06" ] ], "items2": { "data": true } }, "result1": true } };
+});

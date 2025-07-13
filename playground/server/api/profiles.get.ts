@@ -1,4 +1,0 @@
-import {Input24} from '~/server/api/types.d';
-export default defineApexHandler<Input24>(async (data) => {
-  return { "data": { "data": [ { "data": true, "result1": false } ], "result1": [ { "data": { "data": { "data": true } }, "result1": 87, "items2": true } ], "items2": [ { "data": { "data": { "data": {  } }, "result1": 62 }, "result1": "wiym8f" }, [ [ [ { "data": [ 53, "9as5cw" ] }, [ "nabbvp", { "data": 15 } ], { "data": [ 3, true, "u5ivv7" ], "result1": 64 } ] ], { "data": { "data": [ { "data": "pv9sw0" }, "mhwe10" ] }, "result1": false }, "bs5s6h" ], true ] }, "result1": { "data": true, "result1": "xav0i6" }, "items2": [ { "data": { "data": false, "result1": [ [ [ true, true, { "data": "f6e1n8", "result1": "3ibbpc" } ], [ true ] ], "euozpb" ], "items2": true } }, [ "4ps3ai", [ "1lo082" ] ], { "data": { "data": true, "result1": 70, "items2": { "data": { "data": false }, "result1": 92 } } } ] };
-});

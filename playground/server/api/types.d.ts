@@ -1,52 +1,52 @@
 // Auto-generated types file
 
-export interface Input1 { price:number; updatedAt:string; 'id': string; }
+export type Input1 = Omit<{ price:number; innerId:string; email:string; status:string; count:number; outerId:string; title:string; }, 'count'> & {'uid': string;}& Partial<{ prevId:string; itemId:string; }>
 
-export type Input2 = {'user-id': string}&{ updatedAt:string; createdAt:string; } & { name:string; count:number; }
+export interface Input2 { status:string; nextId:string; 'order-id': string; }
 
-export interface Input3 { name:string; status:string; email:string; 'user-id': string; }
+export type Input3 = Omit<{ updatedAt:string; innerId:string; isActive:boolean; itemId:string; viewId:string; createdAt:string; email:string; age:number; }, 'viewId'> & {'pid': string;'name': string;}& Partial<{ nextId:string; }>
 
-export interface Input4 { isActive:boolean; title:string; }
+export type Input4 = Omit<{ updatedAt:string; email:string; outerId:string; viewId:string; }, 'updatedAt'> &  Partial<{ prevId:string; }>
 
-export interface Input5 { email:string; isActive:boolean; 'user-id': string; }
+export type Input5 = Omit<{ nextId:string; title:string; email:string; age:number; productId:string; viewId:string; price:number; }, 'nextId'> & {'pid': string;}& Partial<{ createdAt:string; isActive:boolean; }>
 
-export interface Input6 { price:number; age:number; createdAt:string; }
+export interface Input7 { age:number; createdAt:string; innerId:string; 'pid': string; 'uid': string; }
 
-export interface Input7 { email:string; name:string; 'user-id': string; 'category-id': string; }
+export interface Input6 { isActive:boolean; email:string; 'id': string; 'uid': string; }
 
-export interface Input9 { title:string; email:string; 'user-id': string; }
+export type Input8 = {'pid': string;'name': string;'variant-id': string;}& { viewId:string; isActive:boolean; age:number; } | { nextId:string; outerId:string; }
 
-export interface Input8 { status:string; createdAt:string; updatedAt:string; 'user-id': string; }
+export interface Input9 { prevId:string; age:number; price:number; 'user-id': string; }
 
-export type Input10 = {'user-id': string,'category-id': string}&{ updatedAt:string; createdAt:string; } & { isActive:boolean; count:number; }
+export type Input10 = {'variant-id': string;}& { price:number; createdAt:string; } | { count:number; status:string; }
 
-export interface Input12 { email:string; count:number; age:number; 'user-id': string; 'vid': string; 'name': string; }
+export type Input11 = {'pid': string;'category-id': string;}& { outerId:string; status:string; email:string; } | { createdAt:string; age:number; }
 
-export type Input11 = {'uid': string}&{ updatedAt:string; name:string; title:string; } | { count:number; isActive:boolean; }
+export interface Input12 { productId:string; age:number; isActive:boolean; 'pid': string; 'name': string; }
 
-export interface Input13 { count:number; createdAt:string; 'pid': string; }
+export interface Input13 { count:number; itemId:string; 'pid': string; 'name': string; }
 
-export interface Input14 { count:number; email:string; createdAt:string; 'user-id': string; 'category-id': string; 'pid': string; }
+export type Input14 = {'pid': string;'slug': string;}& { viewId:string; createdAt:string; email:string; } | { productId:string; nextId:string; age:number; }
 
-export type Input15 = {'id': string,'variant-id': string}&Omit<{ email:string; status:string; updatedAt:string; title:string; }, 'email'> & Partial<{ age:number; }>
+export interface Input15 { updatedAt:string; createdAt:string; 'variant-id': string; 'category-id': string; }
 
-export interface Input17 { email:string; title:string; price:number; 'user-id': string; 'vid': string; }
+export interface Input16 { count:number; email:string; 'pid': string; 'category-id': string; }
 
-export interface Input16 { isActive:boolean; createdAt:string; 'post-id': string; 'name': string; }
+export interface Input17 { email:string; updatedAt:string; 'id': string; 'uid': string; }
 
-export type Input18 = Omit<{ title:string; status:string; count:number; age:number; email:string; price:number; name:string; }, 'status'> & Partial<{ updatedAt:string; price:number; }>
+export interface Input18 { createdAt:string; prevId:string; 'slug': string; 'order-id': string; }
 
-export interface Input19 { price:number; updatedAt:string; 'user-id': string; 'category-id': string; }
+export type Input19 = {'pid': string;'name': string;'vid': string;}& { updatedAt:string; outerId:string; } | { age:number; }
 
-export type Input20 = {'user-id': string,'category-id': string,'pid': string,'uid': string,'slug': string}&{ updatedAt:string; price:number; } | { email:string; count:number; }
+export type Input20 = {'post-id': string;'order-id': string;}& { status:string; innerId:string; } & { prevId:string; }
 
-export interface Input21 { isActive:boolean; updatedAt:string; 'user-id': string; 'pid': string; }
+export type Input21 = Omit<{ status:string; createdAt:string; email:string; age:number; nextId:string; isActive:boolean; }, 'nextId'> &  Partial<{ createdAt:string; count:number; outerId:string; }>
 
-export type Input22 = {'user-id': string,'category-id': string,'pid': string}&Omit<{ age:number; count:number; updatedAt:string; status:string; isActive:boolean; }, 'status'> & Partial<{ title:string; }>
+export interface Input22 { outerId:string; viewId:string; title:string; }
 
-export interface Input23 { email:string; updatedAt:string; 'category-id': string; }
+export interface Input23 { price:number; status:string; productId:string; 'pid': string; 'name': string; 'id': string; }
 
-export type Input24 = Omit<{ price:number; email:string; count:number; createdAt:string; isActive:boolean; }, 'email'> & Partial<{ email:string; name:string; }>
+export type Input24 = {'uid': string;'post-id': string;'variant-id': string;}& { isActive:boolean; nextId:string; } & { age:number; itemId:string; }
 
-export interface Input25 { title:string; price:number; 'user-id': string; }
+export interface Input25 { outerId:string; productId:string; 'slug': string; 'name': string; }
 
