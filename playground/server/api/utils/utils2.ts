@@ -5,6 +5,6 @@ export function randomData3(data: any) {
 }
 
 export function randomData4(data: any) {
-  return { 'category-id': data['category-id'], ...{ "data": true } };
+  return { 'categoryId': data['categoryId'], ...{ "data": true } };
 }
 

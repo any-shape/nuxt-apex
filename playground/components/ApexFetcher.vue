@@ -1,14 +1,14 @@
 <template>
   <div class="apex-fetcher">
     <span>{{ composableName }}</span>
-    <span>Static: {{ result.status }}; Response: {{ JSON.stringify(result.data.value) }} == {{ JSON.stringify(response) }}</span>
-    <!-- <span>Dynamic: {{ result.status }}; Response: {{ result.data == response ? '✅' : '❌' }}</span> -->
+    <span>Status: {{ status }}; Response: {{ response ? '✅' : '❌' }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
-  const props = defineProps<{ composable: Function, composableName: string, payload: any, response: any }>()
-  const result = await props.composable(props.payload)
+  import type { AsyncDataRequestStatus } from '#app'
+
+  const props = defineProps<{ composableName: string, response: boolean, status: Ref<AsyncDataRequestStatus> }>()
 </script>
 
 <style lang="css">

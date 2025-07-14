@@ -1,6 +1,6 @@
 import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
 import { normalize, dirname, join, basename } from 'node:path'
-import { mkdir, readFile, unlink, writeFile, rm, rename, access, copyFile } from 'node:fs/promises'
+import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
 import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
@@ -170,7 +170,6 @@ export default defineNuxtModule<ApexModuleOptions>({
       })
     }
 
-    await copyFile(resolve('./runtime/templates/omit.txt'), resolve(outputFolder, '_omit.ts'))
     for (const path of await glob(`**/${options.composableName}*.ts`, { cwd: outputFolder, absolute: true })) {
       const name = basename(path, '.ts')
       addImports([
@@ -228,7 +227,8 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
     if(!decl) return 'unknown'
 
     const typeNode = Node.isTypeAliasDeclaration(decl) ? decl.getTypeNode() : decl
-    return typeNode ? typeNode?.getText({ trimLeadingIndentation: true }).replace(/\s+/gm, '') : sym.getName()
+    const text = typeNode ? typeNode?.getText({ trimLeadingIndentation: true }).replace(/\s+/gm, '') : sym.getName()
+    return text.includes('exportinterface') ? '{'+text.replace(/^exportinterface\w+{/s, '') : text
   }
 
   function getAliasFile(sym: Symbol) {
@@ -291,7 +291,7 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
 
   //extract payload type and filepath
   const [payloadArg] = handlerCall.getTypeArguments()
-  const payloadAlias = payloadArg.getType().getAliasSymbol()
+  const payloadAlias = payloadArg.getType().getAliasSymbol() ?? payloadArg.getType().getSymbol()
 
   result.inputType = payloadAlias ? getAliasText(payloadAlias) : payloadArg.getText().replace(/\s+/gm, '')
   result.inputFilePath = payloadAlias ? getAliasFile(payloadAlias) : sf.getFilePath()
@@ -353,13 +353,14 @@ export function getEndpointStructure(endpoint: string, sourcePath: string, baseU
       : capitalize(nameParts[0]) + capitalize(d[method])
 
   const slugs: string[] = []
-  const url = normalize(baseUrl + '/' + path.map(p => {
-    p = /\[.+\]\.(get|post|put|delete)/s.test(p) ? p.split('.')[0] : p
+  const url = '/' + normalize(baseUrl + '/' + path.map(p => {
+    p = /.(get|post|put|delete)/s.test(p) ? p.split('.')[0] : p
+
     if(/\[.+\]/s.test(p)) {
       const slug = p.replaceAll(/\[|\]/g, '')
       slugs.push(slug)
 
-      return `\${data['${slug}']}`
+      return `\${encodeURIComponent(data.${slug})}`
     }
     else return p
   }).join('/')).replace(/\\/g, '/')
@@ -382,7 +383,7 @@ export function constructComposableCode(template: string, et: EndpointTypeStruct
     .replace(/:apiFnName/g, es.name)
     .replace(
       /:inputData/g,
-      (['get', 'delete'].includes(es.method) ? 'params' : 'body') + `: apiGenOmit(data, ${JSON.stringify(es.slugs)})`
+      (['get', 'delete'].includes(es.method) ? 'params' : 'body') + `: data`
     )
 }
 
