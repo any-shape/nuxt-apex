@@ -140,6 +140,24 @@
         "categoryId": "jwz9jg"
       },
       response: { "categoryId": 'jwz9jg', "data": true }
+    },
+    r9Valid: {
+      payload: {
+        a: 'info',
+        b: '15',
+        d: 'test',
+        t: true
+      },
+      response: { "data": "test" }
+    },
+    r9Invalid: {
+      payload: {
+        a: 10,
+        b: 'test',
+        d: 'test',
+        t: new Date()
+      },
+      response: { "data": "test" }
     }
   }
 
@@ -150,7 +168,10 @@
   // const r5 = useTFetchPidTagsCreateByCategoryId(testData.r5.payload)
   // const r6 = useTFetchSettingsOrdersSlugOrderIdTagsUpdate(testData.r6.payload)
   // const r7 = useTFetchPidNameTagsRemove(testData.r7.payload)
-  const r8 = useTFetchUsersPostsCreate(testData.r8.payload)
+  // const r8 = useTFetchUsersPostsCreate(testData.r8.payload)
+
+  // const r9Valid = useTFetchUsersPostsCreate(testData.r8.payload)
+
 
   const cr = (r1: any, r2: any) => JSON.stringify(r1) == JSON.stringify(r2)
 </script>

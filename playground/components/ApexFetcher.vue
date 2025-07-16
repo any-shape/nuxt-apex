@@ -7,8 +7,7 @@
 
 <script setup lang="ts">
   import type { AsyncDataRequestStatus } from '#app'
-
-  const props = defineProps<{ composableName: string, response: boolean, status: Ref<AsyncDataRequestStatus> }>()
+  defineProps<{ composableName: string, response: boolean, status: Ref<AsyncDataRequestStatus> }>()
 </script>
 
 <style lang="css">

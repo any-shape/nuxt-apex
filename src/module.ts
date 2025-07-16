@@ -95,23 +95,28 @@ export default defineNuxtModule<ApexModuleOptions>({
     const limit = pLimit(50)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
-      const id = (_fileGenIds.get(e) || 0) + 1
-      _fileGenIds.set(e, id)
+      try {
+        const id = (_fileGenIds.get(e) || 0) + 1
+        _fileGenIds.set(e, id)
 
-      const et = await extractTypesFromEndpoint(e, tsProject, options.serverEventHandlerName, isUpdate)
-      const es = getEndpointStructure(e, sourcePath, options.sourcePath)
-      const code = constructComposableCode(composableTemplate, et, es, options.composableName)
+        const et = await extractTypesFromEndpoint(e, tsProject, options.serverEventHandlerName, isUpdate)
+        const es = getEndpointStructure(e, sourcePath, options.sourcePath)
+        const code = constructComposableCode(composableTemplate, et, es, options.composableName)
 
-      const fileName = options.composableName + es.name
-      const path = resolve(outputFolder, `${fileName}.ts`).replace(/\\/g, '/')
+        const fileName = options.composableName + es.name
+        const path = resolve(outputFolder, `${fileName}.ts`).replace(/\\/g, '/')
 
-      if(_fileGenIds.get(e) !== id) return
-      await createFile(path, code)
+        if(_fileGenIds.get(e) !== id) return
+        await createFile(path, code)
 
-      await storage.setItem(e, { c: path, hash: await hashFile(e), et })
-      if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
+        await storage.setItem(e, { c: path, hash: await hashFile(e), et })
+        if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
 
-      return true
+        return true
+      }
+      catch (err) {
+        throw new Error(`${err} for file ${e}`)
+      }
     }
 
     const executeMany = async (endpoints: string[], isUpdate: boolean = false, isSilent: boolean = true) => {
@@ -300,6 +305,7 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
   const arrow = handlerCall?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
 
   let responseType = arrow?.getReturnType().getTypeArguments()[0]
+  console.log(arrow?.getReturnType().getTypeArguments());
   while (responseType?.getSymbol()?.getName() === 'Promise') {
     responseType = responseType.getTypeArguments()[0]
   }
