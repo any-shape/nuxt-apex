@@ -304,12 +304,14 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
   //extract response type and filepath
   const arrow = handlerCall?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
 
-  let responseType = arrow?.getReturnType().getTypeArguments()[0]
-  console.log(arrow?.getReturnType().getTypeArguments());
-  while (responseType?.getSymbol()?.getName() === 'Promise') {
-    responseType = responseType.getTypeArguments()[0]
+  let responseType = arrow.getReturnType();
+  while (responseType.getSymbol()?.getName() === "Promise") {
+    const args = responseType.getTypeArguments();
+    if (args.length === 0) break;
+    responseType = args[0];
   }
-  const responseAlias = responseType.getAliasSymbol()
+
+  const responseAlias = responseType.getAliasSymbol() ?? responseType.getSymbol()
 
   if (responseAlias) {
     result.responseType = getAliasText(responseAlias)

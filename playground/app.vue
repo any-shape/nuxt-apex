@@ -40,12 +40,18 @@
       composable-name="useTFetchPidNameTagsRemove"
       :status="r7.status"
       :response="cr(r7.data.value, testData.r7.response)"
-    /> -->
+    />
 
     <apex-fetcher
       composable-name="useTFetchUsersPostsCreate"
       :status="r8.status"
       :response="cr(r8.data.value, testData.r8.response)"
+    /> -->
+
+    <apex-fetcher
+      composable-name="useTFetchUsersPostsCreate"
+      :status="r9Valid.status"
+      :response="cr(r9Valid.data.value, testData.r9Valid.response)"
     />
 
   </div>
@@ -170,7 +176,9 @@
   // const r7 = useTFetchPidNameTagsRemove(testData.r7.payload)
   // const r8 = useTFetchUsersPostsCreate(testData.r8.payload)
 
-  // const r9Valid = useTFetchUsersPostsCreate(testData.r8.payload)
+  const r9Valid = useTFetchValidationGet(testData.r9Valid.payload)
+
+  // const r9Valid = useFetch('/api/validation', { method: 'get', query: testData.r9Valid.payload })
 
 
   const cr = (r1: any, r2: any) => JSON.stringify(r1) == JSON.stringify(r2)
