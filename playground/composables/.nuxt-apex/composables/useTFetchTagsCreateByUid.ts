@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchTagsCreateByUid = <T extends Omit<{price:number;innerId:string;email:string;status:string;count:number;outerId:string;title:string;},'count'>&{'uid':string;}&Partial<{prevId:string;itemId:string;}>>(data: T) => useFetch<unknown>(`/api/tags/${encodeURIComponent(data.uid)}`, { method: 'post', body:omit(data, 'uid') })
+export const useTFetchTagsCreateByUidAsync = <T extends Omit<{price:number;innerId:string;email:string;status:string;count:number;outerId:string;title:string;},'count'>&{'uid':string;}&Partial<{prevId:string;itemId:string;}>>(data: T) => $fetch<unknown>(`/api/tags/${encodeURIComponent(data.uid)}`, { method: 'post', body:omit(data, 'uid') })

@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchPostsVariantIdProfilesGet = <T extends {'variantId':string;}&{price:number;createdAt:string;}|{count:number;status:string;}>(data: T) => useFetch<unknown>(`/api/posts/${encodeURIComponent(data.variant-id)}/profiles`, { method: 'get', query:omit(data, 'variant-id') })
+export const useTFetchPostsVariantIdProfilesGetAsync = <T extends {'variantId':string;}&{price:number;createdAt:string;}|{count:number;status:string;}>(data: T) => $fetch<unknown>(`/api/posts/${encodeURIComponent(data.variant-id)}/profiles`, { method: 'get', query:omit(data, 'variant-id') })

@@ -38,7 +38,7 @@ export interface Input18 { createdAt:string; prevId:string; slug: string; orderI
 
 export type Input19 = {'pid': string;'name': string;'vid': string;}& { updatedAt:string; outerId:string; } | { age:number; }
 
-export type Input20 = {'postId': string;'orderId': string;}& { status:string; innerId:string; } & { prevId:string; }
+export type Input20 = {postId: string;orderId: string;}& { status:string; innerId:string; } & { prevId:string; }
 
 export type Input21 = Omit<{ status:string; createdAt:string; email:string; age:number; nextId:string; isActive:boolean; }, 'nextId'> &  Partial<{ createdAt:string; count:number; outerId:string; }>
 

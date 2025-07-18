@@ -45,7 +45,7 @@ type EndpointTypeStructure = {
 
 export const DEFAULTS = {
   sourcePath: 'api',
-  outputPath: 'node_modules/.nuxt-apex',
+  outputPath: 'composables/.nuxt-apex',
   composableName: 'useTFetch',
   listenFileDependenciesChanges: true,
   serverEventHandlerName: 'defineApexHandler',
@@ -175,13 +175,7 @@ export default defineNuxtModule<ApexModuleOptions>({
       })
     }
 
-    for (const path of await glob(`**/${options.composableName}*.ts`, { cwd: outputFolder, absolute: true })) {
-      const name = basename(path, '.ts')
-      addImports([
-        { name, as: name, from: path },
-        { name: name+'Async', as: name+'Async', from: path }
-      ])
-    }
+    addImportsDir([outputFolder, resolve('./runtime/utils')], { prepend: true })
   }
 })
 
@@ -382,6 +376,10 @@ export function getEndpointStructure(endpoint: string, sourcePath: string, baseU
 }
 
 export function constructComposableCode(template: string, et: EndpointTypeStructure, es: EndpointStructure, composableName: string) {
+  const dataText = es.slugs.length
+   ? `:omit(data, ${es.slugs.map(x => `'${x}'`).join(',')})`
+   : ':data'
+
   return template
     .replace(/:inputType/g, et.inputType)
     .replace(/:responseType/g, et.responseType)
@@ -391,7 +389,7 @@ export function constructComposableCode(template: string, et: EndpointTypeStruct
     .replace(/:apiFnName/g, es.name)
     .replace(
       /:inputData/g,
-      (['get', 'delete'].includes(es.method) ? 'params' : 'body') + `: data`
+      (['get', 'delete'].includes(es.method) ? 'query' : 'body') + dataText
     )
 }
 

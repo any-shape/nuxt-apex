@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchSettingsOrdersSlugOrderIdTagsUpdate = <T extends {createdAt:string;prevId:string;slug:string;orderId:string;}>(data: T) => useFetch<unknown>(`/api/settings/orders/${encodeURIComponent(data.slug)}/${encodeURIComponent(data.orderId)}/tags`, { method: 'put', body:omit(data, 'slug','orderId') })
+export const useTFetchSettingsOrdersSlugOrderIdTagsUpdateAsync = <T extends {createdAt:string;prevId:string;slug:string;orderId:string;}>(data: T) => $fetch<unknown>(`/api/settings/orders/${encodeURIComponent(data.slug)}/${encodeURIComponent(data.orderId)}/tags`, { method: 'put', body:omit(data, 'slug','orderId') })

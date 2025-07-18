@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchPidNameTagsRemove = <T extends {productId:string;age:number;isActive:boolean;'pid':string;'name':string;}>(data: T) => useFetch<unknown>(`/api/${encodeURIComponent(data.pid)}/${encodeURIComponent(data.name)}/tags`, { method: 'delete', query:omit(data, 'pid','name') })
+export const useTFetchPidNameTagsRemoveAsync = <T extends {productId:string;age:number;isActive:boolean;'pid':string;'name':string;}>(data: T) => $fetch<unknown>(`/api/${encodeURIComponent(data.pid)}/${encodeURIComponent(data.name)}/tags`, { method: 'delete', query:omit(data, 'pid','name') })

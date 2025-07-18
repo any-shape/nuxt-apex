@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchPidTagsCreateByCategoryId = <T extends {'pid':string;'categoryId':string;}&{outerId:string;status:string;email:string;}|{createdAt:string;age:number;}>(data: T) => useFetch<unknown>(`/api/${encodeURIComponent(data.pid)}/tags/${encodeURIComponent(data.categoryId)}`, { method: 'post', body:omit(data, 'pid','categoryId') })
+export const useTFetchPidTagsCreateByCategoryIdAsync = <T extends {'pid':string;'categoryId':string;}&{outerId:string;status:string;email:string;}|{createdAt:string;age:number;}>(data: T) => $fetch<unknown>(`/api/${encodeURIComponent(data.pid)}/tags/${encodeURIComponent(data.categoryId)}`, { method: 'post', body:omit(data, 'pid','categoryId') })

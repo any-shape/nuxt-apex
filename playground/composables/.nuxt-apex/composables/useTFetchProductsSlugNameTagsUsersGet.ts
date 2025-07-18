@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchProductsSlugNameTagsUsersGet = <T extends {outerId:string;productId:string;'slug':string;'name':string;}>(data: T) => useFetch<unknown>(`/api/products/${encodeURIComponent(data.slug)}/${encodeURIComponent(data.name)}/tags/users`, { method: 'get', query:omit(data, 'slug','name') })
+export const useTFetchProductsSlugNameTagsUsersGetAsync = <T extends {outerId:string;productId:string;'slug':string;'name':string;}>(data: T) => $fetch<unknown>(`/api/products/${encodeURIComponent(data.slug)}/${encodeURIComponent(data.name)}/tags/users`, { method: 'get', query:omit(data, 'slug','name') })

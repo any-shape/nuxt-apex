@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchCommentsIdProductsGetByUid = <T extends {email:string;updatedAt:string;'id':string;'uid':string;}>(data: T) => useFetch<unknown>(`/api/comments/${encodeURIComponent(data.id)}/products/${encodeURIComponent(data.uid)}`, { method: 'get', query:omit(data, 'id','uid') })
+export const useTFetchCommentsIdProductsGetByUidAsync = <T extends {email:string;updatedAt:string;'id':string;'uid':string;}>(data: T) => $fetch<unknown>(`/api/comments/${encodeURIComponent(data.id)}/products/${encodeURIComponent(data.uid)}`, { method: 'get', query:omit(data, 'id','uid') })

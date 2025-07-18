@@ -4,60 +4,70 @@
       composable-name="useTFetchCommentsIdProductsGetByUid"
       :status="r1.status"
       :response="cr(r1.data.value, testData.r1.response)"
+      :error="r1.error.value?.message"
     />
 
     <apex-fetcher
       composable-name="useTFetchMessagesProfilesPostIdOrderIdCreateByPostId"
       :status="r2.status"
       :response="cr(r2.data.value, testData.r2.response)"
+      :error="r2.error.value?.message"
     />
 
     <apex-fetcher
       composable-name="useTFetchPidNameGetById"
       :status="r3.status"
       :response="cr(r3.data.value, testData.r3.response)"
-    />
+      :error="r3.error.value?.message"
+    /> -->
 
     <apex-fetcher
       composable-name="useTFetchPidNamePostsRemoveByVariantId"
       :status="r4.status"
       :response="cr(r4.data.value, testData.r4.response)"
+      :error="r4.error.value?.message"
     />
 
-    <apex-fetcher
+    <!-- <apex-fetcher
       composable-name="useTFetchPidTagsCreateByCategoryId"
       :status="r5.status"
       :response="cr(r5.data.value, testData.r5.response)"
+      :error="r5.error.value?.message"
     />
 
     <apex-fetcher
       composable-name="useTFetchSettingsOrdersSlugOrderIdTagsUpdate"
       :status="r6.status"
       :response="cr(r6.data.value, testData.r6.response)"
+      :error="r6.error.value?.message"
     />
 
     <apex-fetcher
       composable-name="useTFetchPidNameTagsRemove"
       :status="r7.status"
       :response="cr(r7.data.value, testData.r7.response)"
+      :error="r7.error.value?.message"
     />
 
     <apex-fetcher
       composable-name="useTFetchUsersPostsCreate"
       :status="r8.status"
       :response="cr(r8.data.value, testData.r8.response)"
-    /> -->
+      :error="r8.error.value?.message"
+    />
 
     <apex-fetcher
       composable-name="useTFetchUsersPostsCreate"
       :status="r9Valid.status"
       :response="cr(r9Valid.data.value, testData.r9Valid.response)"
-    />
+      :error="r9Valid.error.value?.message"
+    /> -->
 
   </div>
 </template>
 
 <script setup lang="ts">
+
   const testData = {
     r1: {
       payload: {
@@ -71,7 +81,7 @@
     r2: {
       payload: {
         "postId": "tn94sr",
-        "ordeId": "jwo2qw",
+        "orderId": "jwo2qw",
         "status": "w098fl",
         "innerId": "lto15y",
         "prevId": "jzm5vi"
@@ -170,16 +180,13 @@
   // const r1 = useTFetchCommentsIdProductsGetByUid(testData.r1.payload)
   // const r2 = useTFetchMessagesProfilesPostIdOrderIdCreateByPostId(testData.r2.payload)
   // const r3 = useTFetchPidNameGetById(testData.r3.payload)
-  // const r4 = useTFetchPidNamePostsRemoveByVariantId(testData.r4.payload)
+  const r4 = useTFetchPidNamePostsRemoveByVariantId(testData.r4.payload)
   // const r5 = useTFetchPidTagsCreateByCategoryId(testData.r5.payload)
   // const r6 = useTFetchSettingsOrdersSlugOrderIdTagsUpdate(testData.r6.payload)
   // const r7 = useTFetchPidNameTagsRemove(testData.r7.payload)
   // const r8 = useTFetchUsersPostsCreate(testData.r8.payload)
 
-  const r9Valid = useTFetchValidationGet(testData.r9Valid.payload)
-
-  // const r9Valid = useFetch('/api/validation', { method: 'get', query: testData.r9Valid.payload })
-
+  // const r9Valid = useTFetchValidationGet(testData.r9Valid.payload)
 
   const cr = (r1: any, r2: any) => JSON.stringify(r1) == JSON.stringify(r2)
 </script>

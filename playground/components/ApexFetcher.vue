@@ -2,12 +2,13 @@
   <div class="apex-fetcher">
     <span>{{ composableName }}</span>
     <span>Status: {{ status }}; Response: {{ response ? '✅' : '❌' }}</span>
+    <span v-if="error">Error: {{ error }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
   import type { AsyncDataRequestStatus } from '#app'
-  defineProps<{ composableName: string, response: boolean, status: Ref<AsyncDataRequestStatus> }>()
+  defineProps<{ composableName: string, response: boolean, status: Ref<AsyncDataRequestStatus>, error?: string }>()
 </script>
 
 <style lang="css">

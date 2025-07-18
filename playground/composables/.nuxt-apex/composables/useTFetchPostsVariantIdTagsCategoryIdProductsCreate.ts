@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchPostsVariantIdTagsCategoryIdProductsCreate = <T extends {updatedAt:string;createdAt:string;'variantId':string;'categoryId':string;}>(data: T) => useFetch<unknown>(`/api/posts/${encodeURIComponent(data.variant-id)}/tags/${encodeURIComponent(data.category-id)}/products`, { method: 'post', body:omit(data, 'variant-id','category-id') })
+export const useTFetchPostsVariantIdTagsCategoryIdProductsCreateAsync = <T extends {updatedAt:string;createdAt:string;'variantId':string;'categoryId':string;}>(data: T) => $fetch<unknown>(`/api/posts/${encodeURIComponent(data.variant-id)}/tags/${encodeURIComponent(data.category-id)}/products`, { method: 'post', body:omit(data, 'variant-id','category-id') })

@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchUsersPostsCreate = <T extends Omit<{status:string;createdAt:string;email:string;age:number;nextId:string;isActive:boolean;},'nextId'>&Partial<{createdAt:string;count:number;outerId:string;}>>(data: T) => useFetch<unknown>(`/api/users/posts`, { method: 'post', body:data })
+export const useTFetchUsersPostsCreateAsync = <T extends Omit<{status:string;createdAt:string;email:string;age:number;nextId:string;isActive:boolean;},'nextId'>&Partial<{createdAt:string;count:number;outerId:string;}>>(data: T) => $fetch<unknown>(`/api/users/posts`, { method: 'post', body:data })

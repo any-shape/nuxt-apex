@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchPidNameGetById = <T extends {price:number;status:string;productId:string;'pid':string;'name':string;'id':string;}>(data: T) => useFetch<unknown>(`/api/${encodeURIComponent(data.pid)}/${encodeURIComponent(data.name)}/${encodeURIComponent(data.id)}`, { method: 'get', query:omit(data, 'pid','name','id') })
+export const useTFetchPidNameGetByIdAsync = <T extends {price:number;status:string;productId:string;'pid':string;'name':string;'id':string;}>(data: T) => $fetch<unknown>(`/api/${encodeURIComponent(data.pid)}/${encodeURIComponent(data.name)}/${encodeURIComponent(data.id)}`, { method: 'get', query:omit(data, 'pid','name','id') })

@@ -1,0 +1,3 @@
+import {useFetch} from 'nuxt/app'
+export const useTFetchPidCategoriesUidOrdersCreate = <T extends {age:number;createdAt:string;innerId:string;'pid':string;'uid':string;}>(data: T) => useFetch<unknown>(`/api/${encodeURIComponent(data.pid)}/categories/${encodeURIComponent(data.uid)}/orders`, { method: 'post', body:omit(data, 'pid','uid') })
+export const useTFetchPidCategoriesUidOrdersCreateAsync = <T extends {age:number;createdAt:string;innerId:string;'pid':string;'uid':string;}>(data: T) => $fetch<unknown>(`/api/${encodeURIComponent(data.pid)}/categories/${encodeURIComponent(data.uid)}/orders`, { method: 'post', body:omit(data, 'pid','uid') })
