@@ -3,16 +3,25 @@
     <span>{{ composableName }}</span>
     <span>Status: {{ status }}; Response: {{ response ? '✅' : '❌' }}</span>
     <span v-if="error">Error: {{ error }}</span>
+
+    <div
+      style="position: absolute; right: 10px; bottom: 5px; padding: 3px 7px; background: oklch(70.2% 0.183 293.541); border-radius: 4px; cursor: pointer;"
+      v-if="fetcher"
+      @click="fetcher()"
+    >
+      Fetch it
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
   import type { AsyncDataRequestStatus } from '#app'
-  defineProps<{ composableName: string, response: boolean, status: Ref<AsyncDataRequestStatus>, error?: string }>()
+  defineProps<{ composableName: string, response: boolean, status: Ref<AsyncDataRequestStatus> | string, error?: string, fetcher?: () => void }>()
 </script>
 
 <style lang="css">
   .apex-fetcher {
+    position: relative;
     display: flex;
     flex-direction: column;
     padding: 10px 12px;

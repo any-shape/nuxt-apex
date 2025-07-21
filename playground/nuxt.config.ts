@@ -7,7 +7,4 @@ export default defineNuxtConfig({
       asyncContext: true,
     }
   },
-  apex: {
-    ignore: ['api/fake-data.get.ts']
-  }
 })

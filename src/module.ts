@@ -1,4 +1,4 @@
-import { defineNuxtModule, addImportsDir, addImports, createResolver } from '@nuxt/kit'
+import { defineNuxtModule, addImportsDir, addImports, createResolver, addServerImportsDir } from '@nuxt/kit'
 import { normalize, dirname, join, basename } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
 import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts } from 'ts-morph'
@@ -27,6 +27,10 @@ export interface ApexModuleOptions {
   tsConfigFilePath?: string,
   /** Ignore endpoints by relative path, e.g. api/some-endpoint.ts (default: []) */
   ignore?: string[],
+  /** The path to the cache folder */
+  cacheFolder?: string,
+  /** The concurrency limit for generating composables (default: 50) */
+  concurrency?: number
 }
 
 type EndpointStructure = {
@@ -46,11 +50,13 @@ type EndpointTypeStructure = {
 export const DEFAULTS = {
   sourcePath: 'api',
   outputPath: 'composables/.nuxt-apex',
+  cacheFolder: 'composables/.nuxt-apex',
   composableName: 'useTFetch',
   listenFileDependenciesChanges: true,
   serverEventHandlerName: 'defineApexHandler',
   tsConfigFilePath: undefined,
   ignore: [],
+  concurrency: 50,
   tsMorphOptions: {
     skipFileDependencyResolution: true,
     compilerOptions: {
@@ -91,8 +97,8 @@ export default defineNuxtModule<ApexModuleOptions>({
       return
     }
 
-    await storage.init({ dir: resolve(nuxt.options.rootDir, `${options.outputPath}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
-    const limit = pLimit(50)
+    await storage.init({ dir: resolve(nuxt.options.rootDir, `${options.cacheFolder}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
+    const limit = pLimit(options.concurrency || 50)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
       try {
@@ -175,7 +181,8 @@ export default defineNuxtModule<ApexModuleOptions>({
       })
     }
 
-    addImportsDir([outputFolder, resolve('./runtime/utils')], { prepend: true })
+    addImportsDir([outputFolder, resolve('runtime/utils'), resolve('runtime/composables')], { prepend: true })
+    addServerImportsDir([resolve('runtime/server/utils')], { prepend: true })
   }
 })
 
@@ -216,12 +223,8 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
     throw new Error(`No ${handlerName} found in ${endpoint}`)
   }
 
-  function resolveAlias(sym: Symbol): Symbol {
-    return sym.getAliasedSymbol?.() ?? sym
-  }
-
   function getAliasText(sym: Symbol) {
-    sym = resolveAlias(sym)
+    sym = sym.getAliasedSymbol?.() ?? sym
     const decl = sym?.getDeclarations().find(d => Node.isTypeAliasDeclaration(d) || Node.isInterfaceDeclaration(d)) as TypeAliasDeclaration | InterfaceDeclaration | undefined
     if(!decl) return 'unknown'
 
@@ -231,7 +234,7 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
   }
 
   function getAliasFile(sym: Symbol) {
-    sym = resolveAlias(sym)
+    sym = sym.getAliasedSymbol?.() ?? sym
     const decl = sym.getDeclarations().find(d => Node.isTypeAliasDeclaration(d) || Node.isInterfaceDeclaration(d))
     return decl ? decl.getSourceFile().getFilePath() : 'unknown'
   }
@@ -298,38 +301,29 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
   //extract response type and filepath
   const arrow = handlerCall?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
 
-  let responseType = arrow.getReturnType();
+  let responseType = arrow.getSignature().getReturnType()
   while (responseType.getSymbol()?.getName() === "Promise") {
-    const args = responseType.getTypeArguments();
-    if (args.length === 0) break;
-    responseType = args[0];
+    const args = responseType.getTypeArguments()
+    if (args.length === 0) break
+    responseType = args[0]
   }
 
-  const responseAlias = responseType.getAliasSymbol() ?? responseType.getSymbol()
+  result.responseType = responseType.getText().replace(/\s+/gm, '')
 
-  if (responseAlias) {
-    result.responseType = getAliasText(responseAlias)
-    result.responseFilePath = getAliasFile(responseAlias)
+  let firstCall: CallExpression | undefined;
+  if (Node.isCallExpression(arrow.getBody())) {
+    firstCall = arrow.getBody() as CallExpression
   }
   else {
-    result.responseType = responseType.getText().replace(/\s+/gm, '')
+    const ret = arrow.getBody().getDescendantsOfKind(SyntaxKind.ReturnStatement)[0]
+    const expr = ret?.getExpression()
 
-    let firstCall: CallExpression | undefined;
-    if (Node.isCallExpression(arrow.getBody())) {
-      firstCall = arrow.getBody() as CallExpression
+    if (expr && Node.isCallExpression(expr)) {
+      firstCall = expr
     }
-    else {
-      const ret = arrow.getBody().getDescendantsOfKind(SyntaxKind.ReturnStatement)[0]
-      const expr = ret?.getExpression()
-
-      if (expr && Node.isCallExpression(expr)) {
-        firstCall = expr
-      }
-    }
-
-    result.responseFilePath = firstCall? getCallDeclFile(firstCall) : sf.getFilePath()
   }
 
+  result.responseFilePath = firstCall? getCallDeclFile(firstCall) : sf.getFilePath()
   return result
 }
 

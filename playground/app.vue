@@ -1,68 +1,143 @@
 <template>
-  <div>
-    <!-- <apex-fetcher
-      composable-name="useTFetchCommentsIdProductsGetByUid"
-      :status="r1.status"
-      :response="cr(r1.data.value, testData.r1.response)"
-      :error="r1.error.value?.message"
-    />
+  <div style="display: flex; gap: 20px;">
+    <div>
+      <apex-fetcher
+        composable-name="useTFetchCommentsIdProductsGetByUid"
+        :status="r1.status"
+        :response="cr(r1.data.value, testData.r1.response)"
+        :error="r1.error.value?.message"
+      />
 
-    <apex-fetcher
-      composable-name="useTFetchMessagesProfilesPostIdOrderIdCreateByPostId"
-      :status="r2.status"
-      :response="cr(r2.data.value, testData.r2.response)"
-      :error="r2.error.value?.message"
-    />
+      <apex-fetcher
+        composable-name="useTFetchMessagesProfilesPostIdOrderIdCreateByPostId"
+        :status="r2.status"
+        :response="cr(r2.data.value, testData.r2.response)"
+        :error="r2.error.value?.message"
+      />
 
-    <apex-fetcher
-      composable-name="useTFetchPidNameGetById"
-      :status="r3.status"
-      :response="cr(r3.data.value, testData.r3.response)"
-      :error="r3.error.value?.message"
-    /> -->
+      <apex-fetcher
+        composable-name="useTFetchPidNameGetById"
+        :status="r3.status"
+        :response="cr(r3.data.value, testData.r3.response)"
+        :error="r3.error.value?.message"
+      />
 
-    <apex-fetcher
-      composable-name="useTFetchPidNamePostsRemoveByVariantId"
-      :status="r4.status"
-      :response="cr(r4.data.value, testData.r4.response)"
-      :error="r4.error.value?.message"
-    />
+      <apex-fetcher
+        composable-name="useTFetchPidNamePostsRemoveByVariantId"
+        :status="r4.status"
+        :response="cr(r4.data.value, testData.r4.response)"
+        :error="r4.error.value?.message"
+      />
 
-    <!-- <apex-fetcher
-      composable-name="useTFetchPidTagsCreateByCategoryId"
-      :status="r5.status"
-      :response="cr(r5.data.value, testData.r5.response)"
-      :error="r5.error.value?.message"
-    />
+      <apex-fetcher
+        composable-name="useTFetchPidTagsCreateByCategoryId"
+        :status="r5.status"
+        :response="cr(r5.data.value, testData.r5.response)"
+        :error="r5.error.value?.message"
+      />
 
-    <apex-fetcher
-      composable-name="useTFetchSettingsOrdersSlugOrderIdTagsUpdate"
-      :status="r6.status"
-      :response="cr(r6.data.value, testData.r6.response)"
-      :error="r6.error.value?.message"
-    />
+      <apex-fetcher
+        composable-name="useTFetchSettingsOrdersSlugOrderIdTagsUpdate"
+        :status="r6.status"
+        :response="cr(r6.data.value, testData.r6.response)"
+        :error="r6.error.value?.message"
+      />
 
-    <apex-fetcher
-      composable-name="useTFetchPidNameTagsRemove"
-      :status="r7.status"
-      :response="cr(r7.data.value, testData.r7.response)"
-      :error="r7.error.value?.message"
-    />
+      <apex-fetcher
+        composable-name="useTFetchPidNameTagsRemove"
+        :status="r7.status"
+        :response="cr(r7.data.value, testData.r7.response)"
+        :error="r7.error.value?.message"
+      />
 
-    <apex-fetcher
-      composable-name="useTFetchUsersPostsCreate"
-      :status="r8.status"
-      :response="cr(r8.data.value, testData.r8.response)"
-      :error="r8.error.value?.message"
-    />
+      <apex-fetcher
+        composable-name="useTFetchUsersPostsCreate"
+        :status="r8.status"
+        :response="cr(r8.data.value, testData.r8.response)"
+        :error="r8.error.value?.message"
+      />
 
-    <apex-fetcher
-      composable-name="useTFetchUsersPostsCreate"
-      :status="r9Valid.status"
-      :response="cr(r9Valid.data.value, testData.r9Valid.response)"
-      :error="r9Valid.error.value?.message"
-    /> -->
+      <apex-fetcher
+        composable-name="useTFetchValidationGet"
+        :status="r9Valid.status"
+        :response="cr(r9Valid.data.value, testData.r9Valid.response)"
+        :error="r9Valid.error.value?.message"
+      />
+    </div>
 
+    <div>
+      <apex-fetcher
+        composable-name="useTFetchCommentsIdProductsGetByUidAsync"
+        :status="r1AsyncData.status"
+        :response="cr(r1AsyncData.data, testData.r1.response)"
+        :error="r1AsyncData.error?.message"
+        :fetcher="r1Async"
+      />
+
+      <apex-fetcher
+        composable-name="useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync"
+        :status="r2AsyncData.status"
+        :response="cr(r2AsyncData.data, testData.r2.response)"
+        :error="r2AsyncData.error?.message"
+        :fetcher="r2Async"
+      />
+
+      <apex-fetcher
+        composable-name="useTFetchPidNameGetByIdAsync"
+        :status="r3AsyncData.status"
+        :response="cr(r3AsyncData.data, testData.r3.response)"
+        :error="r3AsyncData.error?.message"
+        :fetcher="r3Async"
+      />
+
+      <apex-fetcher
+        composable-name="useTFetchPidNamePostsRemoveByVariantIdAsync"
+        :status="r4AsyncData.status"
+        :response="cr(r4AsyncData.data, testData.r4.response)"
+        :error="r4AsyncData.error?.message"
+        :fetcher="r4Async"
+      />
+
+      <apex-fetcher
+        composable-name="useTFetchPidTagsCreateByCategoryIdAsync"
+        :status="r5AsyncData.status"
+        :response="cr(r5AsyncData.data, testData.r5.response)"
+        :error="r5AsyncData.error?.message"
+        :fetcher="r5Async"
+      />
+
+      <apex-fetcher
+        composable-name="useTFetchSettingsOrdersSlugOrderIdTagsUpdateAsync"
+        :status="r6AsyncData.status"
+        :response="cr(r6AsyncData.data, testData.r6.response)"
+        :error="r6AsyncData.error?.message"
+        :fetcher="r6Async"
+      />
+
+      <apex-fetcher
+        composable-name="useTFetchPidNameTagsRemoveAsync"
+        :status="r7.status"
+        :response="cr(r7AsyncData.data, testData.r7.response)"
+        :error="r7AsyncData.error?.message"
+        :fetcher="r7Async"
+      />
+
+      <apex-fetcher
+        composable-name="useTFetchUsersPostsCreateAsync"
+        :status="r8AsyncData.status"
+        :response="cr(r8AsyncData.data, testData.r8.response)"
+        :error="r8AsyncData.error?.message"
+        :fetcher="r8Async"
+      />
+
+      <apex-fetcher
+        composable-name="useTFetchValidationGetAsync"
+        :status="r9ValidAsyncData.status"
+        :response="cr(r9ValidAsyncData.data, testData.r9Valid.response)"
+        :error="r9ValidAsyncData.error?.message"
+        :fetcher="r9ValidAsync"
+      />
+    </div>
   </div>
 </template>
 
@@ -177,16 +252,58 @@
     }
   }
 
-  // const r1 = useTFetchCommentsIdProductsGetByUid(testData.r1.payload)
-  // const r2 = useTFetchMessagesProfilesPostIdOrderIdCreateByPostId(testData.r2.payload)
-  // const r3 = useTFetchPidNameGetById(testData.r3.payload)
+  const r1 = useTFetchCommentsIdProductsGetByUid(testData.r1.payload)
+  const r2 = useTFetchMessagesProfilesPostIdOrderIdCreateByPostId(testData.r2.payload)
+  const r3 = useTFetchPidNameGetById(testData.r3.payload)
   const r4 = useTFetchPidNamePostsRemoveByVariantId(testData.r4.payload)
-  // const r5 = useTFetchPidTagsCreateByCategoryId(testData.r5.payload)
-  // const r6 = useTFetchSettingsOrdersSlugOrderIdTagsUpdate(testData.r6.payload)
-  // const r7 = useTFetchPidNameTagsRemove(testData.r7.payload)
-  // const r8 = useTFetchUsersPostsCreate(testData.r8.payload)
+  const r5 = useTFetchPidTagsCreateByCategoryId(testData.r5.payload)
+  const r6 = useTFetchSettingsOrdersSlugOrderIdTagsUpdate(testData.r6.payload)
+  const r7 = useTFetchPidNameTagsRemove(testData.r7.payload)
+  const r8 = useTFetchUsersPostsCreate(testData.r8.payload)
+  const r9Valid = useTFetchValidationGet(testData.r9Valid.payload)
 
-  // const r9Valid = useTFetchValidationGet(testData.r9Valid.payload)
+  const r1AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r2AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r3AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r4AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r5AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r6AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r7AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r8AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r9ValidAsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+
+  const r1Async = async () => {
+    r1AsyncData.status = 'pending'
+    try {
+      r1AsyncData.data = await useTFetchCommentsIdProductsGetByUidAsync(testData.r1.payload)
+      r1AsyncData.status = 'success'
+    }
+    catch (error) {
+      r1AsyncData.error = error
+      r1AsyncData.status = 'error'
+    }
+  }
+
+  const r2Async = async () => {
+    r1AsyncData.status = 'pending'
+    try {
+      r2AsyncData.data = await useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync(testData.r2.payload)
+      r2AsyncData.status = 'success'
+    }
+    catch (error) {
+      r2AsyncData.error = error
+      r2AsyncData.status = 'error'
+    }
+  }
+
+  const r3Async = async () => await useTFetchPidNameGetByIdAsync(testData.r3.payload)
+  const r4Async = async () => await useTFetchPidNamePostsRemoveByVariantIdAsync(testData.r4.payload)
+  const r5Async = async () => await useTFetchPidTagsCreateByCategoryIdAsync(testData.r5.payload)
+  const r6Async = async () => await useTFetchSettingsOrdersSlugOrderIdTagsUpdateAsync(testData.r6.payload)
+  const r7Async = async () => await useTFetchPidNameTagsRemoveAsync(testData.r7.payload)
+  const r8Async = async () => await useTFetchUsersPostsCreateAsync(testData.r8.payload)
+  const r9ValidAsync = async () => await useTFetchValidationGetAsync(testData.r9Valid.payload)
 
   const cr = (r1: any, r2: any) => JSON.stringify(r1) == JSON.stringify(r2)
+
 </script>
