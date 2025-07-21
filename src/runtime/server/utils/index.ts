@@ -1,5 +1,5 @@
 import { type EventHandler, type EventHandlerRequest, type EventHandlerResponse, H3Event, isError, createError, defineEventHandler, readBody, getRouterParams, getQuery } from 'h3'
-import { z, ZodType, type SafeParseReturnType } from 'zod'
+import { z, ZodType, type ZodSafeParseResult } from 'zod'
 import { useEvent } from 'nitropack/runtime'
 
 type ApexEventHandler<D> = (data: D, event: H3Event<EventHandlerRequest>) => EventHandlerResponse
@@ -20,7 +20,7 @@ export function defineApexHandler<Data = unknown, Req extends EventHandlerReques
 ): EventHandler<Req> {
   return defineEventHandler<Req>(async (event) => {
     let shape: Validator<Data> | undefined
-    let parsed: SafeParseReturnType<Data, Data> | undefined
+    let parsed: ZodSafeParseResult<Data> | undefined
 
     try {
       const raw = await useData<Data>()

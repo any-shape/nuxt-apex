@@ -142,6 +142,7 @@
 </template>
 
 <script setup lang="ts">
+  type ManualFetchResult = { status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any }
 
   const testData = {
     r1: {
@@ -262,48 +263,37 @@
   const r8 = useTFetchUsersPostsCreate(testData.r8.payload)
   const r9Valid = useTFetchValidationGet(testData.r9Valid.payload)
 
-  const r1AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
-  const r2AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
-  const r3AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
-  const r4AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
-  const r5AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
-  const r6AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
-  const r7AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
-  const r8AsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
-  const r9ValidAsyncData = reactive<{ status: 'idle' | 'pending' | 'success' | 'error', data: any, error: any}>({ status: 'pending', data: null, error: null })
+  const r1AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r2AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r3AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r4AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r5AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r6AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r7AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r8AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r9ValidAsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
 
-  const r1Async = async () => {
-    r1AsyncData.status = 'pending'
-    try {
-      r1AsyncData.data = await useTFetchCommentsIdProductsGetByUidAsync(testData.r1.payload)
-      r1AsyncData.status = 'success'
-    }
-    catch (error) {
-      r1AsyncData.error = error
-      r1AsyncData.status = 'error'
-    }
-  }
-
-  const r2Async = async () => {
-    r1AsyncData.status = 'pending'
-    try {
-      r2AsyncData.data = await useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync(testData.r2.payload)
-      r2AsyncData.status = 'success'
-    }
-    catch (error) {
-      r2AsyncData.error = error
-      r2AsyncData.status = 'error'
-    }
-  }
-
-  const r3Async = async () => await useTFetchPidNameGetByIdAsync(testData.r3.payload)
-  const r4Async = async () => await useTFetchPidNamePostsRemoveByVariantIdAsync(testData.r4.payload)
-  const r5Async = async () => await useTFetchPidTagsCreateByCategoryIdAsync(testData.r5.payload)
-  const r6Async = async () => await useTFetchSettingsOrdersSlugOrderIdTagsUpdateAsync(testData.r6.payload)
-  const r7Async = async () => await useTFetchPidNameTagsRemoveAsync(testData.r7.payload)
-  const r8Async = async () => await useTFetchUsersPostsCreateAsync(testData.r8.payload)
-  const r9ValidAsync = async () => await useTFetchValidationGetAsync(testData.r9Valid.payload)
+  const r1Async = async () => await manualFetchWraper(useTFetchCommentsIdProductsGetByUidAsync(testData.r1.payload), r1AsyncData)
+  const r2Async = async () => await manualFetchWraper(useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync(testData.r2.payload), r2AsyncData)
+  const r3Async = async () => await manualFetchWraper(useTFetchPidNameGetByIdAsync(testData.r3.payload), r3AsyncData)
+  const r4Async = async () => await manualFetchWraper(useTFetchPidNamePostsRemoveByVariantIdAsync(testData.r4.payload), r4AsyncData)
+  const r5Async = async () => await manualFetchWraper(useTFetchPidTagsCreateByCategoryIdAsync(testData.r5.payload), r5AsyncData)
+  const r6Async = async () => await manualFetchWraper(useTFetchSettingsOrdersSlugOrderIdTagsUpdateAsync(testData.r6.payload), r6AsyncData)
+  const r7Async = async () => await manualFetchWraper(useTFetchPidNameTagsRemoveAsync(testData.r7.payload), r7AsyncData)
+  const r8Async = async () => await manualFetchWraper(useTFetchUsersPostsCreateAsync(testData.r8.payload), r8AsyncData)
+  const r9ValidAsync = async () => await manualFetchWraper(useTFetchValidationGetAsync(testData.r9Valid.payload), r9ValidAsyncData)
 
   const cr = (r1: any, r2: any) => JSON.stringify(r1) == JSON.stringify(r2)
 
+  const manualFetchWraper = async (fn: Promise<any>, result: ManualFetchResult) => {
+    result.status = 'pending'
+    try {
+      result.data = await fn
+      result.status = 'success'
+    }
+    catch (error) {
+      result.error = error
+      result.status = 'error'
+    }
+  }
 </script>

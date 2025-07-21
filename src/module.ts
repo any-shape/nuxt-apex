@@ -1,5 +1,5 @@
 import { defineNuxtModule, addImportsDir, addImports, createResolver, addServerImportsDir } from '@nuxt/kit'
-import { normalize, dirname, join, basename } from 'node:path'
+import { normalize, dirname, join, basename, posix } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
 import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts } from 'ts-morph'
 import { glob } from 'tinyglobby'
@@ -68,6 +68,15 @@ export const DEFAULTS = {
     },
   }
 }
+
+const EXT_RX   = /\.ts$/
+const SLUG_RX  = /^\[([^\]]+)\]$/
+const METHOD_MAP = {
+  get:    'get',
+  post:   'create',
+  put:    'update',
+  delete: 'remove'
+} as const
 
 const _fileGenIds = new Map<string, number>()
 const { h64Raw } = await xxhash()
@@ -328,45 +337,42 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
 }
 
 export function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: string): EndpointStructure {
-  const d = {
-    get: 'get',
-    post: 'create',
-    put: 'update',
-    delete: 'remove'
+  const relPath = posix.relative(sourcePath.replace(/\\/g, '/'), endpoint.replace(/\\/g, '/')).replace(EXT_RX, '')
+  const segments = relPath.split('/')
+
+  const last = segments.pop()!
+  const [rawName, methodKey] = last.split('.') as [string, keyof typeof METHOD_MAP]
+  const action = METHOD_MAP[methodKey]
+
+  const folderPart = segments.map(p => pascalCase(p)).join('')
+  let baseName: string
+
+  if (SLUG_RX.test(rawName)) {
+    const slug = rawName.slice(1, -1)
+    baseName = action + 'By' + pascalCase(slug)
+  } else if (rawName === 'index') {
+    baseName = action
+  } else {
+    baseName = pascalCase(rawName) + pascalCase(action)
   }
 
-  const base = endpoint.replace(/.ts$/s, '').split(sourcePath)[1]
-  const path = base.split('/')
-
-  const nameParts = path[path.length - 1].split('.')
-  const method = nameParts[1] as keyof typeof d
-
-  const namePath = path.slice(0, -1).map(p => capitalize(p.replaceAll(/\[|\]/g, ''))).join('')
-  const name = /\[.+\]/s.test(nameParts[0])
-    ? d[method] + 'By' + capitalize(nameParts[0].replaceAll(/\[|\]/g, ''))
-    : nameParts[0] === 'index'
-      ? d[method]
-      : capitalize(nameParts[0]) + capitalize(d[method])
-
+  const name = folderPart ? folderPart + pascalCase(baseName) : pascalCase(baseName)
   const slugs: string[] = []
-  const url = '/' + normalize(baseUrl + '/' + path.map(p => {
-    p = /.(get|post|put|delete)/s.test(p) ? p.split('.')[0] : p
 
-    if(/\[.+\]/s.test(p)) {
-      const slug = p.replaceAll(/\[|\]/g, '')
-      slugs.push(slug)
+  const url = ['', baseUrl, ...segments, rawName].map(segment => {
+    const m = SLUG_RX.exec(segment)
 
-      return `\${encodeURIComponent(data.${slug})}`
+    if (m) {
+      slugs.push(m[1]);
+      return `\${encodeURIComponent(data.${m[1]})}`
     }
-    else return p
-  }).join('/')).replace(/\\/g, '/')
 
-  return {
-    url,
-    slugs,
-    method,
-    name: (namePath + capitalize(name)).split('-').map((x, i) => { if(i === 0) return x; return capitalize(x); }).join('')
-  }
+    return segment
+  })
+  .join('/')
+  .replace(/\/{2,}/g, '/')
+
+  return { url, slugs, method: methodKey, name }
 }
 
 export function constructComposableCode(template: string, et: EndpointTypeStructure, es: EndpointStructure, composableName: string) {
@@ -437,6 +443,10 @@ async function isFolderExists(folder: string) {
   }
 }
 
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1)
+function pascalCase(input: string): string {
+  return input
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map(s => s[0].toUpperCase() + s.slice(1))
+    .join('');
 }
