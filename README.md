@@ -34,18 +34,143 @@
 - Auto-generate composables (like useTFetchOrdersPost) with inferred parameter and result types.
 - Keep everything in sync — update your API, and composables/types are regenerated instantly.
 
-## Short Example
+# Getting Started
 
-```typescript
-// /server/api/posts/[id].get.ts
+### Installation
+Add **nuxt-apex** to your project:
 
-export default defineApexEventHandler(async (event) => {
-  // Your handler code...
-})
+```bash
+# With npm
+npm install nuxt-apex
 
-// pages/posts.vue
-const { data, error } = useTFetchPostsGetById({ id: 42 })
-// data, params, errors — all fully typed and in sync!
+# Or with pnpm
+pnpm add nuxt-apex
+
+# Or with yarn
+yarn add nuxt-apex
 ```
 
-# Getting Started
+### Module Registration
+Add **nuxt-apex** to the modules section of your nuxt.config.ts:
+
+```ts
+export default defineNuxtConfig({
+  modules: [
+    'nuxt-apex'
+  ],
+  apex: {
+    // module options here if you need some customizations
+  },
+  // ...other config
+})
+```
+
+### Project Structure
+For nuxt-apex to work, your API endpoints should follow Nuxt’s convention.
+> Default: all endpoints are under /server/api/.
+
+Example:
+
+```bash
+/server/api/
+  ├─ posts/
+  │   ├─ [id].get.ts
+  │   └─ index.post.ts
+  └─ users/
+      └─ [uid].put.ts
+```
+> [!TIP]
+> You can customize the API root if needed (see Configuration).
+
+### Generating Typed Composables
+**nuxt-apex** will automatically scan your /server/api/ directory on `dev start` and `build` and generate fully typed composables for each endpoint.
+
+No manual steps required — just run your app:
+
+```bash
+npm run dev
+```
+
+### That’s It!
+You’re now ready to develop with maximum DX and type safety. 
+> [!TIP]
+> Check out the Usage section for advanced patterns, custom options, and more.
+
+# Usage
+
+Once nuxt-apex is set up, every API endpoint in your /server/api/ directory gets its own composable with:
+
+ - **Fully inferred request/response types**
+
+    Consistent naming: **useTFetch** + **\<Path\>** + **\<Method\>**. *(Example: /api/posts/[id].get.ts → useTFetchPostsGetById)*
+
+- **Standard return signature:**
+
+  ```ts
+  { data, error, pending, execute, ... } // (Same API as useFetch)
+  ```
+
+## Example
+
+***File /server/api/posts/[id].get.ts***
+```ts
+interface Input {
+  id: number
+}
+
+// defineApexEventHandler - is a new server util provided by the module
+export default defineApexEventHandler<Input>(async (data /*become { id: number } type*/, event) => {
+  return { id: data.id, title: 'Amazing title' }
+})
+```
+
+***File /pages/posts.vue***
+```ts
+const { data, error, pending, execute } = useTFetchPostsGetById({ id: 42 }) // data, params, errors — all fully typed and in sync!
+
+// or you can use async version of the composable
+
+async fucntion doGreatJob() {
+  const data = await useTFetchPostsGetByIdAsync({ id: 42 })
+  // ...amazing code
+} 
+```
+
+## Type Inference & DX
+All parameters, payloads, and responses are strongly typed
+
+> [!TIP]
+> Hover for full type details in VSCode/WebStorm/etc.
+
+No manual typing—types flow from backend handler to frontend composable
+
+```ts
+// VSCode will show autocomplete and type errors instantly:
+useTFetchPostsGetById({ id: '123' }) // TS Error: id must be a number!
+```
+
+## Advanced Options
+All composables accept an optional second argument, matching useFetch:
+
+```ts
+const { data, pending, error, execute } = useTFetchPostsGetById( // or async version — useTFetchPostsGetByIdAsync
+  { id: 42 }, 
+  { immediate: false, watch: false }
+)
+// Use .execute() to trigger the request manually
+```
+
+## Naming Conventions
+- Paths map to PascalCase composable names:
+  - /api/posts/[id].get.ts → useTFetchPostsGetById
+  - /api/users/[uid].put.ts → useTFetchUsersPut
+- [id], [uid], etc. map to parameter names.
+
+> [!TIP]
+> Custom naming can be configured — see Configuration.
+
+## Best Practices
+
+- Use composables at the top level of your setup to leverage auto-fetching
+- Use async versions of the composables for “on-demand” API calls (e.g. on button click) 
+- Types will always reflect your backend contracts—no manual sync needed
