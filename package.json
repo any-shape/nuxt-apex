@@ -1,7 +1,7 @@
 {
   "name": "nuxt-apex",
   "version": "1.0.0",
-  "description": "to do",
+  "description": "Level up your API usage in Nuxt3 with Apex",
   "repository": "https://github.com/any-shape/nuxt-apex",
   "license": "MIT",
   "type": "module",
@@ -9,7 +9,8 @@
     ".": {
       "types": "./dist/types.d.mts",
       "import": "./dist/module.mjs"
-    }
+    },
+    "./runtime/*": "./dist/runtime/*"
   },
   "main": "./dist/module.mjs",
   "typesVersions": {
@@ -22,6 +23,10 @@
   "files": [
     "dist"
   ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "prepack": "nuxt-module-build build",
     "dev": "npm run dev:prepare && nuxi dev playground",
@@ -35,7 +40,8 @@
     "cy:open": "cypress open"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.17.5",
+    "@nuxt/kit": "^4.0.1",
+    "chalk": "^5.4.1",
     "node-persist": "^4.0.4",
     "p-limit": "^6.2.0",
     "tinyglobby": "^0.2.14",
@@ -44,20 +50,20 @@
     "zod": "^4.0.5"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^2.4.1",
-    "@nuxt/eslint-config": "^1.4.1",
+    "@nuxt/devtools": "^2.6.2",
+    "@nuxt/eslint-config": "^1.7.0",
     "@nuxt/module-builder": "^1.0.1",
-    "@nuxt/schema": "^3.17.5",
-    "@nuxt/test-utils": "^3.19.1",
+    "@nuxt/schema": "^4.0.1",
+    "@nuxt/test-utils": "^3.19.2",
     "@types/node": "latest",
     "@types/node-persist": "^3.1.8",
-    "changelogen": "^0.6.1",
+    "changelogen": "^0.6.2",
     "cypress": "^14.5.2",
     "memfs": "^4.17.2",
-    "nuxt": "^3.17.5",
+    "nuxt": "^4.0.1",
     "typescript": "~5.8.3",
-    "vitest": "^3.2.0",
-    "vue-tsc": "^2.2.10"
+    "vitest": "^3.2.4",
+    "vue-tsc": "^3.0.3"
   },
-  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+  "packageManager": "pnpm@10.13.1"
 }

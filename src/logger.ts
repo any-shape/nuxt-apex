@@ -1,8 +1,8 @@
-import chalk from 'chalk'
+import chalk, { type ChalkInstance } from 'chalk'
 
 type LogLevel = 'info' | 'warn' | 'error' | 'success'
 
-const levelConfig: Record<LogLevel, { icon: string; style: chalk.Chalk }> = {
+const levelConfig: Record<LogLevel, { icon: string; style: ChalkInstance }> = {
   info:    { icon: 'ℹ️', style: chalk.blueBright },
   warn:    { icon: '⚠️', style: chalk.yellowBright },
   error:   { icon: '❌', style: chalk.redBright },

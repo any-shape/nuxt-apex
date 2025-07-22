@@ -151,7 +151,7 @@ export default defineNuxtModule<ApexModuleOptions>({
       await executeMany(endpoints)
     }
 
-    if(!nuxt.options._prepare && !nuxt.options._build) {
+    if(!nuxt.options._prepare) {
       info('The endpoint change watcher has started successfully')
 
       nuxt.hook('builder:watch', async (event, path) => {
@@ -302,29 +302,29 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
 
   //extract payload type and filepath
   const [payloadArg] = handlerCall.getTypeArguments()
-  const payloadAlias = payloadArg.getType().getAliasSymbol() ?? payloadArg.getType().getSymbol()
+  const payloadAlias = payloadArg?.getType().getAliasSymbol() ?? payloadArg?.getType().getSymbol()
 
-  result.inputType = payloadAlias ? getAliasText(payloadAlias) : payloadArg.getText().replace(/\s+/gm, '')
+  result.inputType = payloadAlias ? getAliasText(payloadAlias) : payloadArg?.getText().replace(/\s+/gm, '') || 'unknown'
   result.inputFilePath = payloadAlias ? getAliasFile(payloadAlias) : sf.getFilePath()
 
   //extract response type and filepath
-  const arrow = handlerCall?.getArguments()[0].asKindOrThrow(SyntaxKind.ArrowFunction)
+  const arrow = handlerCall?.getArguments()[0]?.asKindOrThrow(SyntaxKind.ArrowFunction)
 
-  let responseType = arrow.getSignature().getReturnType()
-  while (responseType.getSymbol()?.getName() === "Promise") {
+  let responseType = arrow?.getSignature().getReturnType()
+  while (responseType?.getSymbol()?.getName() === "Promise") {
     const args = responseType.getTypeArguments()
     if (args.length === 0) break
     responseType = args[0]
   }
 
-  result.responseType = responseType.getText().replace(/\s+/gm, '')
+  result.responseType = responseType?.getText().replace(/\s+/gm, '') || 'unknown'
 
   let firstCall: CallExpression | undefined;
-  if (Node.isCallExpression(arrow.getBody())) {
+  if (Node.isCallExpression(arrow?.getBody())) {
     firstCall = arrow.getBody() as CallExpression
   }
   else {
-    const ret = arrow.getBody().getDescendantsOfKind(SyntaxKind.ReturnStatement)[0]
+    const ret = arrow?.getBody().getDescendantsOfKind(SyntaxKind.ReturnStatement)[0]
     const expr = ret?.getExpression()
 
     if (expr && Node.isCallExpression(expr)) {
@@ -362,8 +362,8 @@ export function getEndpointStructure(endpoint: string, sourcePath: string, baseU
   const url = ['', baseUrl, ...segments, rawName].map(segment => {
     const m = SLUG_RX.exec(segment)
 
-    if (m) {
-      slugs.push(m[1]);
+    if (m && m[1]) {
+      slugs.push(m[1])
       return `\${encodeURIComponent(data.${m[1]})}`
     }
 
@@ -410,7 +410,8 @@ async function compareWithStore(endpoints: string[]) {
 
   const lookup = Object.create(null) as Record<string, boolean>;
   for(let i = 0, len = endpoints.length; i < len; i++) {
-    lookup[endpoints[i]] = true
+    const k = endpoints[i]
+    if(k) lookup[k] = true
   }
 
   for(const key of await storage.keys()) {
@@ -422,9 +423,10 @@ async function compareWithStore(endpoints: string[]) {
 
   for(let i = 0, len = endpoints.length; i < len; i++) {
     const k = endpoints[i]
-
-    if((await storage.getItem(k))?.hash === (await hashFile(k))) continue
-    changed.push(k)
+    if(k) {
+      if((await storage.getItem(k))?.hash === (await hashFile(k))) continue
+      changed.push(k)
+    }
   }
 
   return changed
@@ -447,6 +449,6 @@ function pascalCase(input: string): string {
   return input
     .split(/[^a-zA-Z0-9]+/)
     .filter(Boolean)
-    .map(s => s[0].toUpperCase() + s.slice(1))
-    .join('');
+    .map(s => s[0]?.toUpperCase() + s.slice(1))
+    .join('')
 }

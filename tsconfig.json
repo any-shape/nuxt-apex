@@ -6,6 +6,6 @@
     "playground",
   ],
   "compilerOptions": {
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
   }
 }
