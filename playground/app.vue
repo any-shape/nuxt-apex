@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; gap: 20px;">
-    <div>
+    <div id="apex-auto">
       <apex-fetcher
         composable-name="useTFetchCommentsIdProductsGetByUid"
         :status="r1.status"
@@ -65,7 +65,7 @@
       />
     </div>
 
-    <div>
+    <div id="apex-manual">
       <apex-fetcher
         composable-name="useTFetchCommentsIdProductsGetByUidAsync"
         :status="r1AsyncData.status"
@@ -116,7 +116,7 @@
 
       <apex-fetcher
         composable-name="useTFetchPidNameTagsRemoveAsync"
-        :status="r7.status"
+        :status="r7AsyncData.status"
         :response="cr(r7AsyncData.data, testData.r7.response)"
         :error="r7AsyncData.error?.message"
         :fetcher="r7Async"

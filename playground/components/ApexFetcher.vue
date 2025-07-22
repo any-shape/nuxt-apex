@@ -1,10 +1,14 @@
 <template>
   <div class="apex-fetcher">
     <span>{{ composableName }}</span>
-    <span>Status: {{ status }}; Response: {{ response ? '✅' : '❌' }}</span>
-    <span v-if="error">Error: {{ error }}</span>
+    <span>
+      <span class="apex-fetcher-status">Status: {{ status }};</span>
+      <span class="apex-fetcher-response">Response: {{ status === 'idle' ? '⏳' : (response ? '✅' : '❌') }}</span>
+    </span>
+    <span class="apex-fetcher-error" v-if="error">Error: {{ error }}</span>
 
     <div
+      class="apex-fetcher-fetch"
       style="position: absolute; right: 10px; bottom: 5px; padding: 3px 7px; background: oklch(70.2% 0.183 293.541); border-radius: 4px; cursor: pointer;"
       v-if="fetcher"
       @click="fetcher()"
