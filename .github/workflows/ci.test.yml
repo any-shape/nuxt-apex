@@ -11,7 +11,7 @@ on:
     paths:
       - "src/**"
       - "!src/mockgen.ts"
-    
+
 jobs:
   unit:
     name: Vitest → Unit Tests
@@ -41,6 +41,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts --prod=false
+
+      - name: Prepare Module
+        run: pnpm run dev:prepare
 
       - name: Run Vitest
         run: pnpm vitest run --reporter=dot
