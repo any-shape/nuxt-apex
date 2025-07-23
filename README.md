@@ -2,12 +2,12 @@
 
 ### Table of Contents
 
-- [Introduction](https://github.com/any-shape/nuxt-apex/edit/main/README.md#introduction)
-- [Getting Started](https://github.com/any-shape/nuxt-apex/edit/main/README.md#getting-started)
-- [Usage](https://github.com/any-shape/nuxt-apex/edit/main/README.m#usage)
-- [Customizing & Configuration](https://github.com/any-shape/nuxt-apex/edit/main/README.md#customizing--configuration)
-- [Notes on Output Location and Caching](https://github.com/any-shape/nuxt-apex/edit/main/README.md#notes-on-output-location-and-caching)
-- [FAQ & Troubleshooting](https://github.com/any-shape/nuxt-apex/edit/main/README.md#faq--troubleshooting)
+- [Introduction](#introduction)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Customizing & Configuration](#customizing--configuration)
+- [Notes on Output Location and Caching](#notes-on-output-location-and-caching)
+- [FAQ & Troubleshooting](#faq--troubleshooting)
 
 <br/>
 
