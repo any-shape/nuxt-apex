@@ -46,7 +46,7 @@ jobs:
         run: cd playground && pnpm exec nuxi prepare --cwd playground
 
       - name: Run Vitest
-        run: pnpm vitest run --reporter=dot
+        run: pnpm vitest run --reporter=dot --project ci
 
   e2e:
     name: Cypress → E2E Tests
