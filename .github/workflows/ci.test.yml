@@ -2,19 +2,16 @@ name: tests
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "dev" ]
     paths:
       - "src/**"
-    paths-ignore:
-      - "src/mockgen.ts"
-
+      - "!src/mockgen.ts"
   pull_request:
     branches: [ "main", "dev" ]
     paths:
       - "src/**"
-    paths-ignore:
-      - "src/mockgen.ts"
-
+      - "!src/mockgen.ts"
+    
 jobs:
   unit:
     name: Vitest → Unit Tests
