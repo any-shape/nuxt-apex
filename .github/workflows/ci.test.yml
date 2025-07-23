@@ -1,0 +1,94 @@
+name: tests
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+    paths:
+      - "src/**"
+    paths-ignore:
+      - "src/mockgen.ts"
+
+jobs:
+  unit:
+    name: Vitest → Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      # cache your pnpm store to speed up installs
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false
+
+      - name: Run Vitest
+        run: pnpm vitest run --reporter=dot
+
+  e2e:
+    name: Cypress → E2E Tests
+    needs: unit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      # same pnpm-store cache
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false
+
+      - name: Cache Cypress Binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-cypress-
+
+      - name: Install Cypress
+        run: pnpm cypress install
+
+      - name: Start Server
+        run: pnpm start &
+
+      - name: Wait for Server to be ready
+        run: npx wait-on http://localhost:3000
+
+      - name: Run Cypress Tests
+        uses: cypress-io/github-action@v6
