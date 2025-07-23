@@ -287,18 +287,7 @@ Let's talk why **composables should be saved in the real** composables/ folder (
 
 - **Example of what can go wrong:**
 
-  Invoking a “composable” from .nuxt or node_modules may throw useFetch can only be used within a Nuxt app setup function, or simply act as a common function, losing access to Nuxt runtime features (SSR context, plugins, etc.).
-
-### Where to keep cache files?
-
-- It’s best to keep cache files next to the generated composables, in a subfolder like composables/.nuxt-apex/ (the default).
-- Don’t move cache to .nuxt or node_modules—those folders are cleared or rebuilt during Nuxt build steps and package installs, risking data loss, race conditions, or missed cache hits.
-
-### Why?
-
-- **Stability**: Keeping cache with the generated composables ensures you never lose the cache during rebuilds, hot reload, or package updates.
-- **Portability**: Makes it easier to share, debug, and migrate your composable setup.
-- **Nuxt compatibility**: .nuxt is meant for Nuxt’s internal build artifacts, and node_modules can be cleaned/overwritten by the package manager at any time.
+  Invoking a “composable” from .nuxt or node_modules may throw `useFetch can only be used within a Nuxt app setup function`, or simply act as a common function, losing access to Nuxt runtime features (SSR context, plugins, etc.).
 
 <br/>
 

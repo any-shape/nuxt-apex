@@ -9,7 +9,6 @@ import storage from 'node-persist'
 import { existsSync } from 'node:fs'
 import { info, error, success, warn } from './logger.ts'
 
-//test ci
 export interface ApexModuleOptions {
   /** Custom path to the source files (default: 'api') */
   sourcePath: string
@@ -27,7 +26,7 @@ export interface ApexModuleOptions {
   tsConfigFilePath?: string,
   /** Ignore endpoints by relative path, e.g. api/some-endpoint.ts (default: []) */
   ignore?: string[],
-  /** The path to the cache folder */
+  /** The path to the cache folder (default: 'node_modules/.cache/nuxt-apex') */
   cacheFolder?: string,
   /** The concurrency limit for generating composables (default: 50) */
   concurrency?: number
@@ -50,7 +49,7 @@ type EndpointTypeStructure = {
 export const DEFAULTS = {
   sourcePath: 'api',
   outputPath: 'composables/.nuxt-apex',
-  cacheFolder: 'composables/.nuxt-apex',
+  cacheFolder: 'node_modules/.cache/nuxt-apex',
   composableName: 'useTFetch',
   listenFileDependenciesChanges: true,
   serverEventHandlerName: 'defineApexHandler',
