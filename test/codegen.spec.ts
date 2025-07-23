@@ -6,14 +6,14 @@ import { Project } from 'ts-morph'
 import { readFile } from 'node:fs/promises'
 import { glob } from 'tinyglobby'
 
-describe('Test type extraction and composable code generation', async () => {
-  const apiDir = resolve(import.meta.dirname, '../playground/server', DEFAULTS.sourcePath).replace(/\\/g, '/')
-  const outputDir = resolve(import.meta.dirname, '../playground', DEFAULTS.outputPath).replace(/\\/g, '/')
-  const templateFile = resolve(import.meta.dirname, '../src/runtime/templates/fetch.txt').replace(/\\/g, '/')
+const apiDir = resolve(import.meta.dirname, '../playground/server', DEFAULTS.sourcePath).replace(/\\/g, '/')
+const outputDir = resolve(import.meta.dirname, '../playground', DEFAULTS.outputPath).replace(/\\/g, '/')
+const templateFile = resolve(import.meta.dirname, '../src/runtime/templates/fetch.txt').replace(/\\/g, '/')
+const endpoints = (await glob(apiDir + '/**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })).map(e => e.replace(/\\/g, '/'))
 
-  const serverHandler = DEFAULTS.serverEventHandlerName
-  const composableName = DEFAULTS.composableName
+console.log(apiDir, outputDir, templateFile, endpoints);
 
+describe('Test type extraction and composable code generation', () => {
   const tsProject = new Project({ tsConfigFilePath: resolve(apiDir, '../tsconfig.json').replace(/\\/g, '/'),
     skipFileDependencyResolution: true,
     compilerOptions: {
@@ -29,14 +29,14 @@ describe('Test type extraction and composable code generation', async () => {
     vol.reset()
   })
 
-  const endpoints = (await glob(apiDir + '/**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })).map(e => e.replace(/\\/g, '/'))
+
   for (const endpoint of endpoints) {
     it(`generates a composable for endpoint: ${endpoint.split(apiDir)[1]}`, async () => {
-      const et = await extractTypesFromEndpoint(endpoint, tsProject, serverHandler, false)
+      const et = await extractTypesFromEndpoint(endpoint, tsProject, DEFAULTS.serverEventHandlerName, false)
       const es = getEndpointStructure(endpoint, apiDir, 'api')
-      const code = constructComposableCode(await readFile(templateFile, 'utf-8'), et, es, composableName)
+      const code = constructComposableCode(await readFile(templateFile, 'utf-8'), et, es, DEFAULTS.composableName)
 
-      const path = resolve(outputDir, './composables', `${composableName + es.name}.ts`).replace(/\\/g, '/')
+      const path = resolve(outputDir, './composables', `${DEFAULTS.composableName + es.name}.ts`).replace(/\\/g, '/')
       vol.fromJSON({ [path]: code })
 
       expect(code).toMatchSnapshot()
