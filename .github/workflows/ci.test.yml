@@ -43,7 +43,7 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
 
       - name: Prepare Playground
-        run: cd playground && pnpm exec nuxi prepare
+        run: pnpm exec nuxi prepare --cwd playground
 
       - name: Run Vitest
         run: pnpm vitest run --reporter=dot
