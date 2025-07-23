@@ -3,6 +3,11 @@ name: tests
 on:
   push:
     branches: [ "main", "dev" ]
+    paths:
+      - "src/**"
+    paths-ignore:
+      - "src/mockgen.ts"
+
   pull_request:
     branches: [ "main", "dev" ]
     paths:
