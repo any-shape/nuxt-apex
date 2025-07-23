@@ -42,7 +42,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts --prod=false
 
-      - name: Prepare Module Playground
+      - name: Install Playground deps
+        run: cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
+
+      - name: Prepare Playground
         run: cd playground && pnpm run prepare
 
       - name: Run Vitest
