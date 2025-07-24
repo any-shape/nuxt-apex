@@ -50,10 +50,10 @@ jobs:
       #   run: pnpm exec nuxi prepare --cwd=playground
 
       - name: Run ls root
-        run: ls
+        run: ls -a
 
       - name: Run ls playground
-        run: cd playground && ls
+        run: cd playground && ls -a
 
       # - name: Run Vitest
       #   run: pnpm vitest run --reporter=dot
