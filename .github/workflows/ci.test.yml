@@ -44,7 +44,7 @@ jobs:
 
 
       - name: Prepare Module & Playground
-        run: pnpm run dev:prepare && cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./
+        run: pnpm run dev:prepare && cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./ && rm -r playground
 
       - name: Run Vitest
         run: pnpm vitest run --reporter=dot
