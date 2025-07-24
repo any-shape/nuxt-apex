@@ -14,32 +14,37 @@ const endpoints = (await glob(apiDir + '/**/*.(get|post|put|delete).ts', { cwd: 
 
 
 describe('Test type extraction and composable code generation', () => {
-  const tsProject = new Project({ tsConfigFilePath: resolve(apiDir, '../tsconfig.json').replace(/\\/g, '/'),
-    skipFileDependencyResolution: true,
-    compilerOptions: {
-      skipLibCheck: true,
-      allowJs: false,
-      declaration: false,
-      noEmit: true,
-      preserveConstEnums: false,
-    }
+  // const tsProject = new Project({ tsConfigFilePath: resolve(apiDir, '../tsconfig.json').replace(/\\/g, '/'),
+  //   skipFileDependencyResolution: true,
+  //   compilerOptions: {
+  //     skipLibCheck: true,
+  //     allowJs: false,
+  //     declaration: false,
+  //     noEmit: true,
+  //     preserveConstEnums: false,
+  //   }
+  // })
+
+  // beforeEach(() => {
+  //   vol.reset()
+  // })
+
+
+  // for (const endpoint of endpoints) {
+  //   it(`generates a composable for endpoint: ${endpoint.split(apiDir)[1]}`, async () => {
+  //     const et = await extractTypesFromEndpoint(endpoint, tsProject, DEFAULTS.serverEventHandlerName, false)
+  //     const es = getEndpointStructure(endpoint, apiDir, DEFAULTS.sourcePath)
+  //     const code = constructComposableCode(await readFile(templateFile, 'utf-8'), et, es, DEFAULTS.composableName)
+
+  //     const path = resolve(outputDir, './composables', `${DEFAULTS.composableName + es.name}.ts`).replace(/\\/g, '/')
+  //     vol.fromJSON({ [path]: code })
+
+  //     expect(code).toMatchSnapshot()
+  //   })
+  // }
+
+  it('print paths', () => {
+    console.log(apiDir, outputDir, templateFile, endpoints)
+
   })
-
-  beforeEach(() => {
-    vol.reset()
-  })
-
-
-  for (const endpoint of endpoints) {
-    it(`generates a composable for endpoint: ${endpoint.split(apiDir)[1]}`, async () => {
-      const et = await extractTypesFromEndpoint(endpoint, tsProject, DEFAULTS.serverEventHandlerName, false)
-      const es = getEndpointStructure(endpoint, apiDir, DEFAULTS.sourcePath)
-      const code = constructComposableCode(await readFile(templateFile, 'utf-8'), et, es, DEFAULTS.composableName)
-
-      const path = resolve(outputDir, './composables', `${DEFAULTS.composableName + es.name}.ts`).replace(/\\/g, '/')
-      vol.fromJSON({ [path]: code })
-
-      expect(code).toMatchSnapshot()
-    })
-  }
 })

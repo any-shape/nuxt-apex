@@ -42,14 +42,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
 
-      - name: ls
-        run: node --experimental-strip-types test/see.ts
 
-      # - name: Prepare Playground
-      #   run: cd playground && pnpm exec nuxi prepare --cwd playground
+      - name: Prepare Playground
+        run: cd playground && pnpm exec nuxi prepare --cwd playground
 
-      # - name: Run Vitest
-      #   run: pnpm vitest run --reporter=dot --project ci
+      - name: Run Vitest
+        run: pnpm vitest run --reporter=dot
 
   e2e:
     name: Cypress → E2E Tests
