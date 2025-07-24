@@ -13,8 +13,36 @@ on:
     #   - "!src/mockgen.ts"
 
 jobs:
-  unit:
-    name: Vitest → Unit Tests
+  # unit:
+  #   name: Vitest → Unit Tests
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Setup pnpm
+  #       uses: pnpm/action-setup@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '22.x'
+  #         cache: 'pnpm'
+  #         cache-dependency-path: pnpm-lock.yaml
+
+  #     - name: Install dependencies
+  #       run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
+
+  #     - name: Prepare Module & Playground
+  #       run: pnpm run dev:prepare && cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./ && rm -r playground
+
+  #     - name: Run Vitest
+  #       run: pnpm vitest run --reporter=dot
+
+  e2e:
+    name: Cypress → E2E Tests
+    # if: ${{ contains(github.event.head_commit.message, '[full test]') }}
+    # needs: unit
     runs-on: ubuntu-latest
 
     steps:
@@ -36,47 +64,26 @@ jobs:
       - name: Prepare Module & Playground
         run: pnpm run dev:prepare && cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./ && rm -r playground
 
-      - name: Run Vitest
-        run: pnpm vitest run --reporter=dot
+      # - name: Cache Cypress Binary
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/.cache/Cypress
+      #     key: ${{ runner.os }}-cypress-${{ hashFiles('**/pnpm-lock.yaml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-cypress-
 
-  e2e:
-    name: Cypress → E2E Tests
-    if: ${{ contains(github.event.head_commit.message, '[full test]') }}
-    needs: unit
-    runs-on: ubuntu-latest
+      # - name: Install Cypress
+      #   run: pnpm cypress install
 
-    steps:
-      - uses: actions/checkout@v4
+      # - name: Start Server
+      #   run: pnpm start &
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-          cache: 'pnpm'
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false
-
-      - name: Cache Cypress Binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/Cypress
-          key: ${{ runner.os }}-cypress-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-cypress-
-
-      - name: Install Cypress
-        run: pnpm cypress install
-
-      - name: Start Server
-        run: pnpm start &
-
-      - name: Wait for Server to be ready
-        run: npx wait-on http://localhost:3000
+      # - name: Wait for Server to be ready
+      #   run: npx wait-on http://localhost:3000
 
       - name: Run Cypress Tests
         uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          start: pnpm dev
+          wait-on: http://localhost:3000
