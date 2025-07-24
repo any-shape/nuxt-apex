@@ -57,7 +57,8 @@ export const DEFAULTS = {
   ignore: [],
   concurrency: 50,
   tsMorphOptions: {
-    skipFileDependencyResolution: true,
+    addFilesFromTsConfig: true,
+    skipFileDependencyResolution: false,
     compilerOptions: {
       skipLibCheck: true,
       allowJs: false,

@@ -248,7 +248,8 @@ Default settings (recommended for most projects):
 
 ```ts
 tsMorphOptions: {
-  skipFileDependencyResolution: true,
+  addFilesFromTsConfig: true,
+  skipFileDependencyResolution: false,
   compilerOptions: {
     skipLibCheck: true,
     allowJs: false,
