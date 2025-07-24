@@ -19,8 +19,10 @@ describe('api composables called in auto and manually', () => {
       cy.wrap($el).find('.apex-fetcher-status').should('have.text', 'Status: idle;')
       cy.wrap($el).find('.apex-fetcher-response').should('have.text', 'Response: ⏳')
 
-      cy.wrap($el).find('.apex-fetcher-fetch').click()
-      cy.wait(1000)
+      cy.wait(500)
+      cy.wrap($el).find('.apex-fetcher-fetch').should('exist').click()
+      cy.wait(500)
+
       cy.wrap($el).find('.apex-fetcher-error').should('not.exist')
       cy.wrap($el).find('.apex-fetcher-status').should('have.text', 'Status: success;')
       cy.wrap($el).find('.apex-fetcher-response').should('have.text', 'Response: ✅')
