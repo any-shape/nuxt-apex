@@ -44,7 +44,7 @@ jobs:
 
 
       - name: Prepare Module & Playground
-        run: pnpm run dev:prepare && cd playground && pnpm exec nuxi prepare --cwd playground
+        run: pnpm run dev:prepare && cd playground && pnpm run prepare
 
       - name: Run ls
         run: cd playground && ls
