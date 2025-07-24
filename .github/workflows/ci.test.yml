@@ -40,14 +40,14 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile && cd playground && pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
 
 
       # - name: Prepare Module
       #   run: pnpm run dev:prepare
 
-      # - name: Prepare Playground
-      #   run: npx nuxi prepare --cwd=playground
+      - name: Prepare Playground
+        run: npx nuxi prepare --cwd=playground
 
       - name: Run ls
         run: ls -a
