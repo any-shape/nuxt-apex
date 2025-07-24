@@ -16,7 +16,7 @@ describe('api composables called in auto and manually', () => {
     cy.intercept('**/api/**').as('manualFetch')
 
     cy.get('#apex-manual .apex-fetcher').should('have.length', 9).each(($el) => {
-      cy.wait(1200)
+      cy.waitForHydration()
 
       return cy.wrap($el).within(() => {
         cy.get('.apex-fetcher-error').should('not.exist')
