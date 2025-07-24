@@ -40,19 +40,19 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile && cd playground && pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
 
 
-      # - name: Prepare Module
-      #   run: pnpm run dev:prepare
+      - name: Prepare Module
+        run: pnpm run dev:prepare
 
-      # - name: Prepare Playground
-      #   run: pnpm exec nuxi prepare --cwd=playground
+      - name: Prepare Playground
+        run: pnpm exec nuxi prepare --cwd=playground
 
-      - name: Run ls root
+      - name: Run ls
         run: ls -a
 
-      - name: Run ls playground
+      - name: Run ls2
         run: cd playground && ls -a
 
       # - name: Run Vitest
