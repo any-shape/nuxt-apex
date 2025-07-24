@@ -40,7 +40,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
+        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install
 
 
       - name: Prepare Module
