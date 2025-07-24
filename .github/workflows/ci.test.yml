@@ -40,8 +40,8 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: ls
-        run: ls
-      
+        run: node --experimental-strip-types test/see.ts
+
       # - name: Install dependencies
       #   run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
 
