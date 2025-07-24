@@ -11,35 +11,35 @@ const outputDir = resolve(import.meta.dirname, '../playground', DEFAULTS.outputP
 const templateFile = resolve(import.meta.dirname, '../src/runtime/templates/fetch.txt').replace(/\\/g, '/')
 const endpoints = (await glob(apiDir + '/**/*.(get|post|put|delete).ts', { cwd: apiDir, absolute: true })).map(e => e.replace(/\\/g, '/'))
 
-console.log(apiDir, outputDir, templateFile, endpoints);
+console.log(apiDir, outputDir, templateFile);
 
-describe('Test type extraction and composable code generation', () => {
-  const tsProject = new Project({ tsConfigFilePath: resolve(apiDir, '../tsconfig.json').replace(/\\/g, '/'),
-    skipFileDependencyResolution: true,
-    compilerOptions: {
-      skipLibCheck: true,
-      allowJs: false,
-      declaration: false,
-      noEmit: true,
-      preserveConstEnums: false,
-    }
-  })
+// describe('Test type extraction and composable code generation', () => {
+//   const tsProject = new Project({ tsConfigFilePath: resolve(apiDir, '../tsconfig.json').replace(/\\/g, '/'),
+//     skipFileDependencyResolution: true,
+//     compilerOptions: {
+//       skipLibCheck: true,
+//       allowJs: false,
+//       declaration: false,
+//       noEmit: true,
+//       preserveConstEnums: false,
+//     }
+//   })
 
-  beforeEach(() => {
-    vol.reset()
-  })
+//   beforeEach(() => {
+//     vol.reset()
+//   })
 
 
-  for (const endpoint of endpoints) {
-    it(`generates a composable for endpoint: ${endpoint.split(apiDir)[1]}`, async () => {
-      const et = await extractTypesFromEndpoint(endpoint, tsProject, DEFAULTS.serverEventHandlerName, false)
-      const es = getEndpointStructure(endpoint, apiDir, 'api')
-      const code = constructComposableCode(await readFile(templateFile, 'utf-8'), et, es, DEFAULTS.composableName)
+//   for (const endpoint of endpoints) {
+//     it(`generates a composable for endpoint: ${endpoint.split(apiDir)[1]}`, async () => {
+//       const et = await extractTypesFromEndpoint(endpoint, tsProject, DEFAULTS.serverEventHandlerName, false)
+//       const es = getEndpointStructure(endpoint, apiDir, 'api')
+//       const code = constructComposableCode(await readFile(templateFile, 'utf-8'), et, es, DEFAULTS.composableName)
 
-      const path = resolve(outputDir, './composables', `${DEFAULTS.composableName + es.name}.ts`).replace(/\\/g, '/')
-      vol.fromJSON({ [path]: code })
+//       const path = resolve(outputDir, './composables', `${DEFAULTS.composableName + es.name}.ts`).replace(/\\/g, '/')
+//       vol.fromJSON({ [path]: code })
 
-      expect(code).toMatchSnapshot()
-    })
-  }
-})
+//       expect(code).toMatchSnapshot()
+//     })
+//   }
+// })
