@@ -50,12 +50,12 @@ jobs:
         run: cd playground && pnpm exec nuxt prepare --cwd=playground
 
       - name: Run ls2
-        run: cd playground && ls -a
+        run: cd playground/playground && ls -a
       # - name: Run ls
       #   run: ls -a
 
-      - name: Run ls2
-        run: cd playground && ls -a
+      # - name: Run ls2
+      #   run: cd playground && ls -a
 
       # - name: Run Vitest
       #   run: pnpm vitest run --reporter=dot
