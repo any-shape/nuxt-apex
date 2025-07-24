@@ -47,7 +47,7 @@ jobs:
       #   run: pnpm run dev:prepare
 
       - name: Prepare Playground
-        run: cd playground && pnpm exec nuxt prepare --cwd=./
+        run: pnpm exec nuxt prepare --cwd=playground
 
       - name: Run ls
         run: ls -a
