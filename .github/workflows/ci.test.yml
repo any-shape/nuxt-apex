@@ -43,22 +43,11 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
 
 
-      # - name: Prepare Module
-      #   run: pnpm run dev:prepare
+      - name: Prepare Module & Playground
+        run: pnpm run dev:prepare && cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./
 
-      - name: Prepare Playground
-        run: cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./
-
-      - name: Run ls2
-        run: cd playground && ls -a
-      # - name: Run ls
-      #   run: ls -a
-
-      # - name: Run ls2
-      #   run: cd playground && ls -a
-
-      # - name: Run Vitest
-      #   run: pnpm vitest run --reporter=dot
+      - name: Run Vitest
+        run: pnpm vitest run --reporter=dot
 
   # e2e:
   #   name: Cypress → E2E Tests
