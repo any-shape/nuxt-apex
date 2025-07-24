@@ -42,7 +42,7 @@
   Designed for high-performance apps using Nuxt 3/4 and TypeScript. Works seamlessly with your existing API structure.
 
 ## How does it work?
-- **Scan your API directory for all endpoints (e.g. /server/api/).**
+- **Scan your API directory for all endpoints (e.g. `server/api/`).**
 - **Extract type information from your endpoint handlers using TypeScript (ts-morph).**
 - **Auto-generate composables (like useTFetchOrdersPost) with inferred parameter and result types.**
 - **Keep everything in sync — update your API, and composables/types are regenerated instantly.**
@@ -82,7 +82,7 @@ export default defineNuxtConfig({
 
 ### Project Structure
 For nuxt-apex to work, your API endpoints should follow Nuxt’s convention.
-> Default: all endpoints are under /server/api/.
+> Default: all endpoints are under `server/api/`.
 
 Example:
 
@@ -98,7 +98,7 @@ Example:
 > You can customize the API root if needed (see Configuration).
 
 ### Generating Typed Composables
-**nuxt-apex** will automatically scan your /server/api/ directory on `dev start` and `build` and generate fully typed composables for each endpoint.
+**nuxt-apex** will automatically scan your `server/api/` directory on `dev start` and `build` and generate fully typed composables for each endpoint.
 
 No manual steps required — just run your app:
 
@@ -115,12 +115,10 @@ You’re now ready to develop with maximum DX and type safety.
 
 # Usage
 
-Once nuxt-apex is set up, every API endpoint in your /server/api/ directory gets its own composable with:
+Once nuxt-apex is set up, every API endpoint in your `server/api/` directory gets its own composable with:
 
  - **Fully inferred request/response types**
-
-    Consistent naming: **useTFetch** + **\<Path\>** + **\<Method\>**. *(Example: /api/posts/[id].get.ts → useTFetchPostsGetById)*
-
+ - Consistent naming: **useTFetch** + **\<Path\>** + **\<Method\>**. *(Example: /api/posts/[id].get.ts → useTFetchPostsGetById)*
 - **Standard return signature:**
 
   ```ts
@@ -129,7 +127,7 @@ Once nuxt-apex is set up, every API endpoint in your /server/api/ directory gets
 
 ## Example
 
-***File /server/api/posts/[id].get.ts***
+***File server/api/posts/[id].get.ts***
 ```ts
 interface Input {
   id: number
@@ -159,7 +157,7 @@ export default defineApexHandler<Input>(async (data /*become { id: number } type
 // For more examples see playground folder
 ```
 
-***File /pages/posts.vue***
+***File pages/posts.vue***
 ```ts
 const { data, error, pending, execute } = useTFetchPostsGetById({ id: 42 }) // data, params, errors — all fully typed and in sync!
 
@@ -262,14 +260,14 @@ tsMorphOptions: {
 
 ## Best Practices
 
-- **Keep listenFileDependenciesChanges enabled for best DX in development.**
-- **Match outputPath and cacheFolder if you want to keep generated files together.**
-- **Use ignore for test, mock, or internal endpoints.**
+- **Keep `listenFileDependenciesChanges` enabled for best DX in development.**
+- **Match `outputPath` and `cacheFolder` if you want to keep generated files together.**
+- **Use `ignore` for test, mock, or internal endpoints.**
 
 <br/>
 
 # Notes on Output Location and Caching
-Let's talk why **composables should be saved in the real** composables/ folder (and not in .nuxt or node_modules). Nuxt treat files in the /composables folder specially:
+Let's talk why **composables should be saved in the real** `composables/` folder (and not in .nuxt or node_modules). Nuxt treat files in the `composables/` folder specially:
 
 - Only composables in this folder (or subfolders) are automatically registered and available globally.
 - Nuxt’s addImports and addImportsDir cannot fully “register” composables from outside the /composables tree.
@@ -295,17 +293,17 @@ Let's talk why **composables should be saved in the real** composables/ folder (
 # FAQ & Troubleshooting
 
 #### Q: Why aren’t my generated composables showing up in my app?
-- A: Make sure your outputPath is inside the real /composables directory (not `.nuxt` or `node_modules`). Only files in /composables are treated as Nuxt composables and available for auto-imports.
+- A: Make sure your outputPath is inside the real `composables/` directory (not `.nuxt` or `node_modules`). Only files in `composables/` are treated as Nuxt composables and available for auto-imports.
 
 #### Q: I get errors like useFetch can only be used within a Nuxt app setup function. Why?
 - A: This happens if you try to use a generated composable that isn’t located in the composables folder.
-  Solution: Ensure your composables are saved in /composables (e.g., composables/.nuxt-apex/).
+  Solution: Ensure your composables are saved in `composables/` (e.g., `composables/.nuxt-apex/`).
   Files in `.nuxt` or `node_modules` are treated as utilities, not composables, and lose Nuxt context.
 
 #### Q: Why are some endpoints missing composables?
 - A: Check the following:
   - Endpoint files must be inside your configured sourcePath.
-  - They must export a function named as in serverEventHandlerName (default: defineApexHandler).
+  - They must export a function named as in serverEventHandlerName (default: `defineApexHandler`).
   - The file is not excluded by your ignore pattern.
 
 #### Q: How do I add a new endpoint and get a composable for it?
@@ -346,7 +344,7 @@ ignore: ['api/internal/**', 'api/dev-only.ts', '**/*.test.ts']
   - Enable `listenFileDependenciesChanges` and/or increase concurrency if you have a large API.
 
 #### Q: Will generated composables survive nuxt build or dependency reinstall?
-- A: Yes — if you use the /composables directory for output.
+- A: Yes — if you use the `composables/` directory for output.
   Never put them in `.nuxt` or `node_modules`, as these folders can be deleted or rebuilt by Nuxt and your package manager.
 
 #### Q: Can I regenerate composables manually?
