@@ -9,5 +9,5 @@ export default defineNuxtConfig({
     build: { target: 'es2022', minify: 'esbuild', outDir: 'dist' },
     optimizeDeps: { include: ['zod', 'xxhash-wasm'] }
   },
-  devtools: { enabled: true }
+  devtools: { enabled: true },
 })
