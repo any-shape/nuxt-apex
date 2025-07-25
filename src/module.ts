@@ -1,5 +1,5 @@
-import { defineNuxtModule, addImportsDir, addImports, createResolver, addServerImportsDir } from '@nuxt/kit'
-import { normalize, dirname, join, basename, posix } from 'node:path'
+import { defineNuxtModule, addImportsDir, createResolver, addServerImportsDir } from '@nuxt/kit'
+import { dirname, join, posix, relative, resolve } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
 import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts } from 'ts-morph'
 import { glob } from 'tinyglobby'
@@ -88,16 +88,18 @@ export default defineNuxtModule<ApexModuleOptions>({
   },
   defaults: DEFAULTS,
   async setup(options, nuxt) {
-    const { resolve } = createResolver(import.meta.url)
+    const { resolve } = createResolver(process.cwd())
+    const { resolve: resolveInner } = createResolver(import.meta.url)
 
     const tsConfigFilePath = (DEFAULTS.tsConfigFilePath || resolve(nuxt.options.serverDir, 'tsconfig.json')).replace(/\\/g, '/')
+
     if(!existsSync(tsConfigFilePath)) {
       warn(`tsconfig.json not found in ${nuxt.options.serverDir}. Skipping...`)
       return
     }
 
     const tsProject = new Project({ tsConfigFilePath, ...options.tsMorphOptions })
-    const composableTemplate = await readFile(resolve('./runtime/templates/fetch.txt'), 'utf8')
+    const composableTemplate = await readFile(resolveInner('./runtime/templates/fetch.txt'), 'utf8')
 
     const outputFolder = resolve(nuxt.options.rootDir, `${options.outputPath}/composables`).replace(/\\/g, '/')
     const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath).replace(/\\/g, '/')
@@ -122,11 +124,16 @@ export default defineNuxtModule<ApexModuleOptions>({
         const path = resolve(outputFolder, `${fileName}.ts`).replace(/\\/g, '/')
 
         if(_fileGenIds.get(e) !== id) return
+
         await createFile(path, code)
+        await storage.setItem(absToRel(e), { c: absToRel(path), hash: await hashFile(e), et: {
+          inputType: et.inputType,
+          inputFilePath: absToRel(et.inputFilePath),
+          responseType: et.responseType,
+          responseFilePath: absToRel(et.responseFilePath)
+        }})
 
-        await storage.setItem(e, { c: path, hash: await hashFile(e), et })
         if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
-
         return true
       }
       catch (err) {
@@ -138,7 +145,7 @@ export default defineNuxtModule<ApexModuleOptions>({
       const result = await Promise.allSettled(endpoints.map(e => limit(() => executor(e, isUpdate, isSilent))))
 
       const fulfilled = result.filter(r => r.status === 'fulfilled').map(r => r.value!)
-      if(fulfilled.length) success(`Generated ${fulfilled.length} endpoints`)
+      if(fulfilled.length && !isSilent && !isUpdate) success(`Generated ${fulfilled.length} endpoints`)
 
       const errors = result.filter(r => r.status === 'rejected').map(r => r.reason)
       if(errors.length) error(`Errors during generation ${errors.length}:`)
@@ -161,11 +168,11 @@ export default defineNuxtModule<ApexModuleOptions>({
         if(options.listenFileDependenciesChanges) {
           const reversableRelated = (await storage.data()).filter(x => {
             const u = x.value.et
-            return u.inputFilePath === endpoint || u.responseFilePath === endpoint
-          }).map(x => x.key)
+            return u.inputFilePath === absToRel(endpoint) || u.responseFilePath === absToRel(endpoint)
+          }).map(x => relToAbs(x.key))
 
           if(event === 'change' && reversableRelated.length) {
-            await executeMany(reversableRelated, false, false)
+            await executeMany(reversableRelated, true, false)
             return
           }
         }
@@ -180,8 +187,8 @@ export default defineNuxtModule<ApexModuleOptions>({
         }
         else if(event === 'unlink' && isProcessFile) {
           try {
-            await unlink((await storage.getItem(endpoint)).c)
-            await storage.removeItem(endpoint)
+            await unlink(relToAbs((await storage.getItem(endpoint)).c))
+            await storage.removeItem(absToRel(endpoint))
           }
           catch (err) {
             error(`Error during deletion: ${(err as Error).message}`)
@@ -190,8 +197,8 @@ export default defineNuxtModule<ApexModuleOptions>({
       })
     }
 
-    addImportsDir([outputFolder, resolve('runtime/utils'), resolve('runtime/composables')], { prepend: true })
-    addServerImportsDir([resolve('runtime/server/utils')], { prepend: true })
+    addImportsDir([outputFolder, resolveInner('runtime/utils'), resolveInner('runtime/composables')], { prepend: true })
+    addServerImportsDir([resolveInner('runtime/server/utils')], { prepend: true })
   }
 })
 
@@ -410,13 +417,13 @@ async function compareWithStore(endpoints: string[]) {
 
   const lookup = Object.create(null) as Record<string, boolean>;
   for(let i = 0, len = endpoints.length; i < len; i++) {
-    const k = endpoints[i]
+    const k = absToRel(endpoints[i])
     if(k) lookup[k] = true
   }
 
   for(const key of await storage.keys()) {
     if(!lookup[key]) {
-      await rm((await storage.getItem(key)).c)
+      await rm(relToAbs((await storage.getItem(key)).c))
       await storage.removeItem(key)
     }
   }
@@ -424,7 +431,7 @@ async function compareWithStore(endpoints: string[]) {
   for(let i = 0, len = endpoints.length; i < len; i++) {
     const k = endpoints[i]
     if(k) {
-      if((await storage.getItem(k))?.hash === (await hashFile(k))) continue
+      if((await storage.getItem(absToRel(k)))?.hash === (await hashFile(k))) continue
       changed.push(k)
     }
   }
@@ -433,7 +440,7 @@ async function compareWithStore(endpoints: string[]) {
 }
 
 async function getRelatedFiles(endpoint: string) {
-  return await storage.getItem(endpoint).then(({ et }) => [ et.inputFilePath, et.responseFilePath ] as string[])
+  return await storage.getItem(absToRel(endpoint)).then(({ et }) => [ relToAbs(et.inputFilePath), relToAbs(et.responseFilePath) ] as string[])
 }
 
 async function isFolderExists(folder: string) {
@@ -451,4 +458,13 @@ function pascalCase(input: string): string {
     .filter(Boolean)
     .map(s => s[0]?.toUpperCase() + s.slice(1))
     .join('')
+}
+
+function absToRel(absPath: string, root: string = process.cwd()): string {
+  return relative(root, absPath).replace(/\\/g, '/')
+}
+
+function relToAbs(relPath: string, root: string = process.cwd()): string {
+  const trimmed = relPath.replace(/^[/\\]+/, '')
+  return resolve(root, trimmed).replace(/\\/g, '/')
 }

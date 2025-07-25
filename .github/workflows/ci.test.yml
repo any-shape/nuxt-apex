@@ -2,7 +2,7 @@ name: tests
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "main", "dev" ]
     paths:
       - "src/**"
       - "test/**"
