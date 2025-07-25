@@ -4,7 +4,7 @@ An advanced Nuxt 3/4 module that automatically generates fully-typed API composa
 
 ## Motivation
 
-**Stop writing manual API calls** — No more useFetch('/api/posts/42') scattered throughout your app with zero type safety.
+**Stop writing manual API calls** — No more `useFetch('/api/posts/42')` scattered throughout your app with zero type safety.
 
 ```ts
 // pages/users.vue ❌
