@@ -3,14 +3,20 @@ name: tests
 on:
   push:
     branches: [ "dev" ]
-    # paths:
-    #   - "src/**"
-    #   - "!src/mockgen.ts"
+    paths:
+      - "src/**"
+      - "test/**"
+      - "cypress/**"
+      - ".github/workflows/ci.test.yml"
+      - "!src/mockgen.ts"
   pull_request:
     branches: [ "main", "dev" ]
-    # paths:
-    #   - "src/**"
-    #   - "!src/mockgen.ts"
+    paths:
+      - "src/**"
+      - "test/**"
+      - "cypress/**"
+      - ".github/workflows/ci.test.yml"
+      - "!src/mockgen.ts"
 
 jobs:
   unit:
