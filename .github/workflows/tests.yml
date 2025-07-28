@@ -1,79 +1,72 @@
-# name: tests
+name: tests
 
-# on:
-#   workflow_run:
-#     workflows: ["commit lint"]
-#     types:
-#       - completed
+on:
+  workflow_run:
+    workflows: ["commit lint"]
+    types:
+      - completed
 
-#   push:
-#     branches: [ "main", "dev" ]
-#     paths:
-#       - "src/**"
-#       - "test/**"
-#       - "cypress/**"
-#       - ".github/workflows/**"
-#       - "!src/mockgen.ts"
+permissions:
+  contents: read
 
-#   pull_request:
-#     branches: [ "main", "dev" ]
-#     paths:
-#       - "src/**"
-#       - "test/**"
-#       - "cypress/**"
-#       - ".github/workflows/**"
-#       - "!src/mockgen.ts"
+jobs:
+  unit:
+    if: github.event.workflow_run.conclusion == 'success'
+    name: Vitest → Unit Tests
+    runs-on: ubuntu-latest
 
-# jobs:
-#   unit:
-#     if: github.event.workflow_run.conclusion == 'success'
-#     name: Vitest → Unit Tests
-#     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-#     steps:
-#       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
-#       - name: Setup pnpm
-#         uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
-#       - name: Setup Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: '22.x'
-#           cache: 'pnpm'
-#           cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
 
-#       - name: Install dependencies
-#         run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
+      - name: Prepare Module & Playground
+        run: pnpm run dev:prepare && cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./ && rm -r playground
 
-#       - name: Prepare Module & Playground
-#         run: pnpm run dev:prepare && cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./ && rm -r playground
+      - name: Run Vitest
+        run: pnpm vitest run --reporter=dot
 
-#       - name: Run Vitest
-#         run: pnpm vitest run --reporter=dot
+  e2e:
+    name: Cypress → E2E Tests
+    needs: unit
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      (
+        github.event.workflow_run.head_branch == 'main' ||
+        (
+          github.event.workflow_run.head_branch == 'dev' &&
+          contains(github.event.workflow_run.head_commit.message, '[full test]')
+        )
+      )
 
-#   e2e:
-#     name: Cypress → E2E Tests
-#     if: (github.head_ref || github.ref_name) == 'main' || ((github.head_ref || github.ref_name) == 'dev' && contains(github.event.head_commit.message, '[full test]'))
-#     needs: unit
-#     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-#     steps:
-#       - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
-#       - name: Setup pnpm
-#         uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
-#       - name: Setup Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: '22.x'
-#           cache: 'pnpm'
-#           cache-dependency-path: pnpm-lock.yaml
-
-#       - name: Run Cypress Tests
-#         uses: cypress-io/github-action@v6
-#         with:
-#           browser: chrome
-#           start: pnpm dev
-#           wait-on: http://localhost:3000
+      - name: Run Cypress Tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          start: pnpm dev
+          wait-on: http://localhost:3000
