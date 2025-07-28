@@ -2,6 +2,7 @@ name: commit lint
 
 on:
   pull_request:
+    types: [opened, edited, synchronize, reopened]
     branches:
       - dev
       - main
@@ -31,11 +32,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Get current PR title
+        id: pr_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            core.setOutput('title', pr.title);
+            core.setOutput('base_ref', pr.base.ref);
+            return pr.title;
+
       - name: Validate conventional commit format
         id: commitlint_check
         run: |
-          TARGET_BRANCH="${{ github.event.pull_request.base.ref }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
+          TARGET_BRANCH="${{ steps.pr_info.outputs.base_ref }}"
+          PR_TITLE="${{ steps.pr_info.outputs.title }}"
 
           echo "🎯 Target branch: $TARGET_BRANCH"
           echo "📝 PR title: $PR_TITLE"
@@ -91,3 +107,35 @@ jobs:
 
               Please update your PR title to match this format.`
             })
+
+      - name: Clean up previous failure comments
+        if: success() && steps.commitlint_check.outputs.validation_passed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            const currentTitle = "${{ steps.pr_info.outputs.title }}";
+
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: number,
+            });
+
+            const failureComments = comments.data.filter(comment =>
+              comment.body.includes('❌ PR Title Format Issue') &&
+              comment.user.login === 'github-actions[bot]'
+            );
+
+            for (const comment of failureComments) {
+              try {
+                await github.rest.issues.deleteComment({
+                  owner,
+                  repo,
+                  comment_id: comment.id,
+                });
+                console.log(`Deleted failure comment ${comment.id}`);
+              } catch (error) {
+                console.log(`Failed to delete comment ${comment.id}:`, error.message);
+              }
+            }
