@@ -123,7 +123,7 @@ jobs:
             });
 
             const failureComments = comments.data.filter(comment =>
-              comment.body.includes('❌ PR Title Format Issue') &&
+              comment.body.includes('❌ Conventional Commit Format Required') &&
               comment.user.login === 'github-actions[bot]'
             );
 
