@@ -43,9 +43,13 @@ jobs:
           if [[ "$TARGET_BRANCH" == "main" || "$TARGET_BRANCH" == "dev" ]]; then
             echo "✅ Validating PR title follows conventional commit format..."
 
+            # Create a temporary file with the PR title
+            echo "$PR_TITLE" > /tmp/pr-title.txt
+
             # Validate PR title (which becomes the commit message in squash merge)
-            if echo "$PR_TITLE" | npx commitlint --verbose; then
+            if npx commitlint --from HEAD~1 --edit /tmp/pr-title.txt --verbose; then
               echo "✅ PR title follows conventional commit format"
+              echo "validation_passed=true" >> $GITHUB_OUTPUT
             else
               echo "❌ PR title must follow conventional commit format when merging to $TARGET_BRANCH"
               echo ""
@@ -54,11 +58,13 @@ jobs:
               echo "  fix: resolve login redirect issue"
               echo "  docs: update API documentation"
               echo "  chore: update dependencies"
+              echo "validation_passed=false" >> $GITHUB_OUTPUT
               exit 1
             fi
           else
             echo "ℹ️  Skipping conventional commit validation for feature branch"
             echo "✅ Free-form commits allowed on feature branches"
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Add PR comment with guidance (on failure)
