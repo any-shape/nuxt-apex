@@ -1,0 +1,85 @@
+name: commit lint
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  commitlint:
+    name: Linter → Lint commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate conventional commit format
+        run: |
+          TARGET_BRANCH="${{ github.event.pull_request.base.ref }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          echo "🎯 Target branch: $TARGET_BRANCH"
+          echo "📝 PR title: $PR_TITLE"
+
+          if [[ "$TARGET_BRANCH" == "main" || "$TARGET_BRANCH" == "dev" ]]; then
+            echo "✅ Validating PR title follows conventional commit format..."
+
+            # Validate PR title (which becomes the commit message in squash merge)
+            if echo "$PR_TITLE" | npx commitlint --verbose; then
+              echo "✅ PR title follows conventional commit format"
+            else
+              echo "❌ PR title must follow conventional commit format when merging to $TARGET_BRANCH"
+              echo ""
+              echo "Examples:"
+              echo "  feat: add new user authentication"
+              echo "  fix: resolve login redirect issue"
+              echo "  docs: update API documentation"
+              echo "  chore: update dependencies"
+              exit 1
+            fi
+          else
+            echo "ℹ️  Skipping conventional commit validation for feature branch"
+            echo "✅ Free-form commits allowed on feature branches"
+          fi
+
+      - name: Add PR comment with guidance (on failure)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Conventional Commit Format Required
+
+              Your PR title needs to follow [conventional commit format](https://www.conventionalcommits.org/) when merging to \`${{ github.event.pull_request.base.ref }}\`.
+
+              **Current title:** \`${{ github.event.pull_request.title }}\`
+
+              **Examples of valid titles:**
+              - \`feat: add new user authentication system\`
+              - \`fix: resolve login redirect issue\`
+              - \`docs: update API documentation\`
+              - \`chore: update dependencies\`
+              - \`refactor: improve error handling\`
+
+              Please update your PR title to match this format.`
+            })
