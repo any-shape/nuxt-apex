@@ -1,42 +1,49 @@
-# # .github/workflows/release.yml
-# name: release
+name: release
 
-# on:
-#   workflow_run:
-#     workflows: ["tests"]
-#     types:
-#       - completed
+on:
+  push:
+    branches:
+      - dev
+      - main
 
-# jobs:
-#   release:
-#     name: Semantic Release
-#     if: github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
-#     runs-on: ubuntu-latest
+permissions:
+  contents: read
 
-#     env:
-#       # npm registry must be set so setup-node can write .npmrc
-#       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-#       GITHUB_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
 
-#     steps:
-#       - name: Checkout repo
-#         uses: actions/checkout@v4
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
 
-#       - name: Setup Node.js & pnpm
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: '22.x'
-#           cache: 'pnpm'
-#           cache-dependency-path: pnpm-lock.yaml
+    env:
+      # npm registry must be set so setup-node can write .npmrc
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GITHUB_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
 
-#       - name: Install pnpm
-#         uses: pnpm/action-setup@v4
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-#       - name: Install dependencies
-#         run: pnpm install --frozen-lockfile
+      - name: Setup Node.js & pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
-#       - name: Build Nuxt‑Apex module
-#         run: pnpm run prepack
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
-#       - name: Run semantic-release
-#         run: npx semantic-release --no-ci
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Nuxt‑Apex module
+        run: pnpm run prepack
+
+      - name: Run semantic-release
+        run: npx semantic-release
