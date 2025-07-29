@@ -1,0 +1,196 @@
+name: ci
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  commitlint:
+    name: Linter → Lint commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get current PR title
+        id: pr_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            core.setOutput('title', pr.title);
+            core.setOutput('base_ref', pr.base.ref);
+            return pr.title;
+
+      - name: Validate conventional commit format
+        id: commitlint_check
+        run: |
+          TARGET_BRANCH="${{ steps.pr_info.outputs.base_ref }}"
+          PR_TITLE="${{ steps.pr_info.outputs.title }}"
+
+          echo "🎯 Target branch: $TARGET_BRANCH"
+          echo "📝 PR title: $PR_TITLE"
+
+          if [[ "$TARGET_BRANCH" == "main" || "$TARGET_BRANCH" == "dev" ]]; then
+            echo "✅ Validating PR title follows conventional commit format..."
+
+            # Create a temporary file with the PR title
+            echo "$PR_TITLE" > /tmp/pr-title.txt
+
+            # Validate PR title (which becomes the commit message in squash merge)
+            if npx commitlint --from HEAD~1 --edit /tmp/pr-title.txt --verbose; then
+              echo "✅ PR title follows conventional commit format"
+              echo "validation_passed=true" >> $GITHUB_OUTPUT
+            else
+              echo "❌ PR title must follow conventional commit format when merging to $TARGET_BRANCH"
+              echo ""
+              echo "Examples:"
+              echo "  feat: add new user authentication"
+              echo "  fix: resolve login redirect issue"
+              echo "  docs: update API documentation"
+              echo "  chore: update dependencies"
+              echo "validation_passed=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          else
+            echo "ℹ️  Skipping conventional commit validation for feature branch"
+            echo "✅ Free-form commits allowed on feature branches"
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add PR comment with guidance (on failure)
+        if: failure() && steps.commitlint_check.outputs.validation_passed == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Conventional Commit Format Required
+
+              Your PR title needs to follow [conventional commit format](https://www.conventionalcommits.org/) when merging to \`${{ github.event.pull_request.base.ref }}\`.
+
+              **Current title:** \`${{ github.event.pull_request.title }}\`
+
+              **Examples of valid titles:**
+              - \`feat: add new user authentication system\`
+              - \`fix: resolve login redirect issue\`
+              - \`docs: update API documentation\`
+              - \`chore: update dependencies\`
+              - \`refactor: improve error handling\`
+
+              Please update your PR title to match this format.`
+            })
+
+      - name: Clean up previous failure comments
+        if: success() && steps.commitlint_check.outputs.validation_passed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            const currentTitle = "${{ steps.pr_info.outputs.title }}";
+
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: number,
+            });
+
+            const failureComments = comments.data.filter(comment =>
+              comment.body.includes('❌ Conventional Commit Format Required') &&
+              comment.user.login === 'github-actions[bot]'
+            );
+
+            for (const comment of failureComments) {
+              try {
+                await github.rest.issues.deleteComment({
+                  owner,
+                  repo,
+                  comment_id: comment.id,
+                });
+                console.log(`Deleted failure comment ${comment.id}`);
+              } catch (error) {
+                console.log(`Failed to delete comment ${comment.id}:`, error.message);
+              }
+            }
+
+  unit:
+    name: Vitest → Unit Tests
+    runs-on: ubuntu-latest
+    needs: commitlint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --prod=false && cd playground && pnpm install --frozen-lockfile --ignore-scripts --prod=false
+
+      - name: Prepare Module & Playground
+        run: pnpm run dev:prepare && cd playground && pnpm exec nuxt prepare --cwd=playground && mv playground/.nuxt/ ./ && rm -r playground
+
+      - name: Run Vitest
+        run: pnpm vitest run --reporter=dot
+
+  e2e:
+    name: Cypress → E2E Tests
+    needs: [commitlint, unit]
+    runs-on: ubuntu-latest
+    if: >
+        github.event.pull_request.base.ref == 'main' || (
+          github.event.pull_request.base.ref == 'dev' && (contains(github.event.pull_request.title, '[full test]') || contains(github.event.pull_request.title, '[test full]'))
+        )
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Run Cypress Tests
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          start: pnpm dev
+          wait-on: http://localhost:3000

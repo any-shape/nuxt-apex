@@ -4,7 +4,7 @@ An advanced Nuxt 3/4 module that automatically generates fully-typed API composa
 
 ## Motivation
 
-**Stop writing manual API calls** — No more useFetch('/api/posts/42') scattered throughout your app with zero type safety.
+**Stop writing manual API calls** — No more `useFetch('/api/posts/42')` scattered throughout your app with zero type safety.
 
 ```ts
 // pages/users.vue ❌
@@ -193,5 +193,44 @@ apex: {
   // outputPath: '.nuxt/apex',          // ❌ Outside composables/ - breaks
 }
 ```
+
+**Default behavior:** nuxt-apex automatically uses `composables/.nuxt-apex` as the output path, so this works out of the box. Only change it if you need a custom structure.
+
+### Cache Location Strategy
+
+nuxt-apex uses caching to speed up composable generation. You have two options:
+
+**Option 1: Default (node_modules cache)**
+```ts
+apex: {
+  cacheFolder: 'node_modules/.cache/nuxt-apex' // Default
+}
+```
+**Pros:**
+- ✅ Keeps your project clean - cache files don't clutter your source code
+- ✅ Gitignored by default - no accidental commits of cache files
+- ✅ Standard location that tools expect
+
+**Cons:**
+- ❌ Cache is lost when `node_modules` is deleted or with `git pull` conflicts
+- ❌ Slower regeneration after fresh installs
+
+**Option 2: Local cache (synced with git)**
+```ts
+apex: {
+  cacheFolder: 'composables/.nuxt-apex/'
+}
+```
+**Pros:**
+- ✅ Cache survives `node_modules` deletion
+- ✅ Faster setup for new team members (cache comes with git clone)
+- ✅ More predictable builds across environments
+
+**Cons:**
+- ❌ Cache files are committed to your repository
+- ❌ Larger git repository size
+- ❌ Potential merge conflicts in cache files
+
+**Recommendation:** Use the default unless you have a large API and slow generation times, or your team frequently deletes `node_modules`.
 
 **Default behavior:** nuxt-apex automatically uses `composables/.nuxt-apex` as the output path, so this works out of the box. Only change it if you need a custom structure.

@@ -1,0 +1,48 @@
+name: release
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+
+    env:
+      NPM_TOKEN :    ${{ secrets.NPM_TOKEN }}
+      GITHUB_TOKEN:  ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js & pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Nuxt‑Apex module
+        run: pnpm run dev:prepare && pnpm run prepack
+
+      - name: Run semantic-release
+        run: npx semantic-release
