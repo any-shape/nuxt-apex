@@ -43,7 +43,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Nuxt‑Apex module
-        run: pnpm run prepack
+        run: pnpm run dev:prepare && pnpm run prepack
 
       - name: Run semantic-release
         run: npx semantic-release
