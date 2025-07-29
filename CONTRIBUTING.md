@@ -4,29 +4,43 @@
 
 ### Table of Contents
 
-  - **Table of Contents**
-  - **Code of Conduct**
-  - **Asking Questions**
-  - **Getting Started**
-  - **Development Setup**
-  - **Branching and Workflow**
-  - **Coding Standards**
-  - **Commit Messages**
-  - **Running Tests**
-  - **Submitting a Pull Request**
-  - **Issue Reporting**
-  - **Feature Requests**
+- **[Code of Conduct](#code-of-conduct)**
+- **[Asking Questions](#asking-questions)**
+- **[Getting Started](#getting-started)**
+- **[Development Setup](#development-setup)**
+- **[Branching and Workflow](#branching-and-workflow)**
+- **[Coding Standards](#coding-standards)**
+- **[Commit Messages](#commit-messages)**
+- **[Running Tests](#running-tests)**
+- **[Submitting a Pull Request](#submitting-a-pull-request)**
+- **[Issue Reporting](#issue-reporting)**
+- **[Feature Requests](#feature-requests)**
+- **[Documentation](#documentation)**
+- **[License](#license)**
 
 ## Code of Conduct
 
 **This project follows the [Contributor Covenant v3.0](https://www.contributor-covenant.org/version/3/0/code_of_conduct/). By participating, you agree to abide by its terms.**
 
 ## Asking Questions
-**In short, GitHub issues are not the appropriate place to debug your specific project, but should be reserved for filing bugs and feature requests.**
+
+We want to keep our issue tracker focused on actionable bugs and feature requests, so please direct general questions and support inquiries to our community discussion channels:
+
+**GitHub [Discussions](https://github.com/your-org/nuxt-apex/discussions)**:  
+  - How‑to questions (“How do I configure X?”).
+  - Best practices (“What’s the recommended pattern for Y?”).
+  - Brainstorming and design feedback.
+
+**When asking a question, please include:**
+  - **Context**: what you’re building and how you’re using `nuxt-apex`.  
+  - **Reproduction steps**: code snippets or minimal repos demonstrating the issue or configuration.  
+  - **What you’ve tried**: any documentation pages, examples, or approaches you’ve already explored.
+
+By keeping questions in the right place, we can ensure bugs and feature work stay on track in our issue tracker—and community members can more easily share knowledge and help each other!
 
 ## Getting Started
 
-  - Fork the repository on GitHub.
+  - Fork the repository on `GitHub`.
   - Clone your fork locally:
     ```shell
     git clone git@github.com:<your-username>/nuxt-apex.git
@@ -59,7 +73,7 @@
   - Create a new branch: `git checkout -b feature/your-feature`.
   - Develop and test your changes.
   - Commit your work following Conventional Commits.
-  - Push your branch and open a `Pull Request` against `dev` (for new features) or `main` (for hotfixes (**not recommended**)).
+  - Push your branch and open a `Pull Request` against `dev`.
 
 
 ## Coding Standards
@@ -69,9 +83,9 @@
   - **Modularity**: Break features into small, reusable functions/modules.
   - **Performance**: Prioritize scalability — batch operations, caching, and lazy-loading where appropriate.
 
-  Commit Messages
+## Commit Messages
 
-## All commits must follow the Conventional Commits spec. Examples:
+All commits must follow the **[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary)** spec:
 
   - `fix(router)`: handle null query parameters
   - `feat(parser)`: support nested arrays
@@ -126,3 +140,15 @@ In short, since you are most likely a developer, **provide a ticket that you wou
   - **Do not open a duplicate feature request.** Search for existing feature requests first. If you find your feature (or one very similar) previously requested, comment on that issue.
   - **Fully complete the provided issue template.** The feature request template asks for all necessary information for us to begin a productive conversation.
   - **Be precise about the proposed outcome of the feature** and how it relates to existing features. Include implementation details if possible.
+
+## Documentation
+
+If you introduce new features or change existing behaviors, please **update** the project documentation so that users always have access to accurate information:
+
+  - **README.md**: Add or adjust usage examples, upgrade notes, and configuration instructions.
+  - **JSDoc/TypeScript definitions**: Ensure public APIs have clear type annotations and comments.
+
+## License
+
+By contributing to `nuxt-apex`, you agree that any code, documentation, or other material you submit will be licensed under the project’s [MIT License](LICENSE). Please make sure you’ve read and understood the full license text in the **LICENSE** file before contributing.
+
