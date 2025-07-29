@@ -1,7 +1,7 @@
 {
   "name": "nuxt-apex",
-  "version": "1.0.0",
-  "description": "Level up your API usage in Nuxt3 with Apex",
+  "version": "0.0.0-semantically-released",
+  "description": "An advanced Nuxt 3/4 module that automatically generates fully-typed API composables for all your server endpoints",
   "repository": "https://github.com/any-shape/nuxt-apex",
   "license": "MIT",
   "type": "module",
