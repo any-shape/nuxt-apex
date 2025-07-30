@@ -1,5 +1,5 @@
 import { defineNuxtModule, addImportsDir, createResolver, addServerImportsDir } from '@nuxt/kit'
-import { dirname, join, posix, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
 import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts } from 'ts-morph'
 import { glob } from 'tinyglobby'
@@ -15,7 +15,9 @@ export interface ApexModuleOptions {
   /** Output path (default: 'node_modules/.nuxt-apex/composables') */
   outputPath: string,
   /** Composable name prefix (default: 'useTFetch') */
-  composableName: string,
+  composablePrefix: string,
+  /**Custom naming function for composable names (without prefix) */
+  namingFucntion: (path: string) => string,
   /** @see https://ts-morph.com/setup/ */
   tsMorphOptions: ProjectOptions,
   /**When true, the module will listen for changes in the source files and re-generate the composables (default: true) */
@@ -50,7 +52,8 @@ export const DEFAULTS = {
   sourcePath: 'api',
   outputPath: 'composables/.nuxt-apex',
   cacheFolder: 'node_modules/.cache/nuxt-apex',
-  composableName: 'useTFetch',
+  composablePrefix: 'useTFetch',
+  namingFucntion: undefined,
   listenFileDependenciesChanges: true,
   serverEventHandlerName: 'defineApexHandler',
   tsConfigFilePath: undefined,
@@ -118,9 +121,9 @@ export default defineNuxtModule<ApexModuleOptions>({
 
         const et = await extractTypesFromEndpoint(e, tsProject, options.serverEventHandlerName, isUpdate)
         const es = getEndpointStructure(e, sourcePath, options.sourcePath)
-        const code = constructComposableCode(composableTemplate, et, es, options.composableName)
+        const code = constructComposableCode(composableTemplate, et, es, options.composablePrefix)
 
-        const fileName = options.composableName + es.name
+        const fileName = options.composablePrefix + es.name
         const path = resolve(outputFolder, `${fileName}.ts`).replace(/\\/g, '/')
 
         if(_fileGenIds.get(e) !== id) return
@@ -343,27 +346,18 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
   return result
 }
 
-export function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: string): EndpointStructure {
-  const relPath = posix.relative(sourcePath.replace(/\\/g, '/'), endpoint.replace(/\\/g, '/')).replace(EXT_RX, '')
+export function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: string, namingFucntion?: (path: string) => string): EndpointStructure {
+  const relPath = relative(sourcePath.replace(/\\/g, '/'), endpoint.replace(/\\/g, '/')).replace(EXT_RX, '').replace(/\\/g, '/')
   const segments = relPath.split('/')
 
   const last = segments.pop()!
   const [rawName, methodKey] = last.split('.') as [string, keyof typeof METHOD_MAP]
   const action = METHOD_MAP[methodKey]
-
   const folderPart = segments.map(p => pascalCase(p)).join('')
-  let baseName: string
 
-  if (SLUG_RX.test(rawName)) {
-    const slug = rawName.slice(1, -1)
-    baseName = action + 'By' + pascalCase(slug)
-  } else if (rawName === 'index') {
-    baseName = action
-  } else {
-    baseName = pascalCase(rawName) + pascalCase(action)
-  }
+  const name = namingFucntion?.(relPath) ?? baseNamingFunction(relPath, action, rawName, folderPart)
+  if(typeof name !== 'string' || name.length === 0) throw new Error('namingFucntion must return a valid stiring')
 
-  const name = folderPart ? folderPart + pascalCase(baseName) : pascalCase(baseName)
   const slugs: string[] = []
 
   const url = ['', baseUrl, ...segments, rawName].map(segment => {
@@ -398,6 +392,21 @@ export function constructComposableCode(template: string, et: EndpointTypeStruct
       /:inputData/g,
       (['get', 'delete'].includes(es.method) ? 'query' : 'body') + dataText
     )
+}
+
+function baseNamingFunction(path: string, action: string, rawName: string, folderPart?: string) {
+  let baseName: string
+
+  if (SLUG_RX.test(rawName)) {
+    const slug = rawName.slice(1, -1)
+    baseName = action + 'By' + pascalCase(slug)
+  } else if (rawName === 'index') {
+    baseName = action
+  } else {
+    baseName = pascalCase(rawName) + pascalCase(action)
+  }
+
+  return folderPart ? folderPart + pascalCase(baseName) : pascalCase(baseName)
 }
 
 async function createFile(path: string, content: string) {
