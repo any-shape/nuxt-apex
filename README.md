@@ -117,12 +117,31 @@ export default defineApexHandler<Input>(async (data, event) => {
 export default defineNuxtConfig({
   modules: ['nuxt-apex'],
   apex: {
-    sourcePath: 'api',                    // API source folder
-    outputPath: 'composables/.nuxt-apex', // Output for composables
-    composableName: 'useTFetch',          // Composable prefix
-    ignore: ['api/internal/**'],          // Patterns to ignore
+    sourcePath: 'api',                              // API source folder
+    outputPath: 'composables/.nuxt-apex',           // Output for composables
+    cacheFolder: 'node_modules/.cache/nuxt-apex',   // Output for cache
+    composablePrefix: 'useTFetch',                  // Composable prefix
+    namingFunction: undefined,                      // Custom naming function
+    listenFileDependenciesChanges: true,            // Watch for file changes
+    serverEventHandlerName: 'defineApexHandler',    // Server event handler name
+    tsConfigFilePath: undefined,                    // Path to tsconfig.json
+    ignore: ['api/internal/**'],                    // Patterns to ignore
+    concurrency: 50,                                // Concurrency limit
+    tsMorphOptions: { /* ... */ },                  // ts-morph options
   }
 })
+```
+
+**Custom Naming Function:** If you need more control over composable names, provide a custom naming function & composablePrefix:
+```ts
+apex: {
+  composablePrefix: 'useApi',
+  namingFunction: (path: string) => {
+    const method = ...
+    return `${path.split('/').map(capitalize).join('')}${capitalize(method)}`
+    // Result: useApiPostsIdGet instead of useTFetchPostsGetById
+  }
+}
 ```
 
 ### Two Flavors of Composables
