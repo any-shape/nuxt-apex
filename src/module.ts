@@ -159,7 +159,7 @@ export default defineNuxtModule<ApexModuleOptions>({
     const endpoints = await findEndpoints(sourcePath, options.ignore?.map(x => '!' + resolve(nuxt.options.serverDir, x).replace(/\\/g, '/')))
 
     if(endpoints.length > 0) {
-      await executeMany(endpoints.filter(x => x.includes('validation.get.ts')))
+      await executeMany(endpoints)
     }
 
     if(!nuxt.options._prepare) {
