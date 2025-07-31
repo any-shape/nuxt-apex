@@ -2,182 +2,547 @@
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid].get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchGetByPid = <T extends Omit<{nextId:string;title:string;email:string;age:number;productId:string;viewId:string;price:number;},'nextId'>&{'pid':string;}&Partial<{createdAt:string;isActive:boolean;}>, R extends {data:string;result1:boolean;items2:boolean;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}\`, { method: 'get', query:omit(data, 'pid'), ...opt })
-export const useTFetchGetByPidAsync = <T extends Omit<{nextId:string;title:string;email:string;age:number;productId:string;viewId:string;price:number;},'nextId'>&{'pid':string;}&Partial<{createdAt:string;isActive:boolean;}>, R extends {data:string;result1:boolean;items2:boolean;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:string;result1:boolean;items2:boolean;}>(\`/api/\${encodeURIComponent(data.pid)}\`, { method: 'get', query:omit(data, 'pid'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchGetByPid = <T extends Omit<{nextId:string;title:string;email:string;age:number;productId:string;viewId:string;price:number;},'nextId'>&{'pid':string;}&Partial<{createdAt:string;isActive:boolean;}>, R extends {data:string;result1:boolean;items2:boolean;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}\`, { method: \`get\`, query:omit(data, 'pid'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchGetByPidAsync = <T extends Omit<{nextId:string;title:string;email:string;age:number;productId:string;viewId:string;price:number;},'nextId'>&{'pid':string;}&Partial<{createdAt:string;isActive:boolean;}>, R extends {data:string;result1:boolean;items2:boolean;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:string;result1:boolean;items2:boolean;}>(\`/api/\${encodeURIComponent(data.pid)}\`, { method: \`get\`, query:omit(data, 'pid'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/[name].put.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidUpdateByName = <T extends Omit<{updatedAt:string;innerId:string;isActive:boolean;itemId:string;viewId:string;createdAt:string;email:string;age:number;},'viewId'>&{'pid':string;'name':string;}&Partial<{nextId:string;}>, R extends {data:number[][];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}\`, { method: 'put', body:omit(data, 'pid','name'), ...opt })
-export const useTFetchPidUpdateByNameAsync = <T extends Omit<{updatedAt:string;innerId:string;isActive:boolean;itemId:string;viewId:string;createdAt:string;email:string;age:number;},'viewId'>&{'pid':string;'name':string;}&Partial<{nextId:string;}>, R extends {data:number[][];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number[][];}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}\`, { method: 'put', body:omit(data, 'pid','name'), ...opt })
+/**
+ * Generates a composable that sends a \`put\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidUpdateByName = <T extends Omit<{updatedAt:string;innerId:string;isActive:boolean;itemId:string;viewId:string;createdAt:string;email:string;age:number;},'viewId'>&{'pid':string;'name':string;}&Partial<{nextId:string;}>, R extends {data:number[][];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}\`, { method: \`put\`, body:omit(data, 'pid','name'), ...opt })
+/**
+ * Generates a composable that sends a \`put\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidUpdateByNameAsync = <T extends Omit<{updatedAt:string;innerId:string;isActive:boolean;itemId:string;viewId:string;createdAt:string;email:string;age:number;},'viewId'>&{'pid':string;'name':string;}&Partial<{nextId:string;}>, R extends {data:number[][];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number[][];}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}\`, { method: \`put\`, body:omit(data, 'pid','name'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/[name]/[id].get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidNameGetById = <T extends {price:number;status:string;productId:string;'pid':string;'name':string;'id':string;}, R extends {data:{data:string;result1:(boolean|{data:number;result1:{data:{data:{};};result1:boolean;items2:number;};})[];};result1:number;items2:{data:(number|{data:{data:boolean;result1:{data:{data:{data:boolean;};};};items2:string;};result1?:undefined;}|{data:{data:{data:{data:number;};};result1:{data:string;};items2:(number|(string|boolean)[])[];};result1:{data:{data:{data:number;};result1:string;items2:(boolean|{data:boolean;})[];};};})[];};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.id)}\`, { method: 'get', query:omit(data, 'pid','name','id'), ...opt })
-export const useTFetchPidNameGetByIdAsync = <T extends {price:number;status:string;productId:string;'pid':string;'name':string;'id':string;}, R extends {data:{data:string;result1:(boolean|{data:number;result1:{data:{data:{};};result1:boolean;items2:number;};})[];};result1:number;items2:{data:(number|{data:{data:boolean;result1:{data:{data:{data:boolean;};};};items2:string;};result1?:undefined;}|{data:{data:{data:{data:number;};};result1:{data:string;};items2:(number|(string|boolean)[])[];};result1:{data:{data:{data:number;};result1:string;items2:(boolean|{data:boolean;})[];};};})[];};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:string;result1:(boolean|{data:number;result1:{data:{data:{};};result1:boolean;items2:number;};})[];};result1:number;items2:{data:(number|{data:{data:boolean;result1:{data:{data:{data:boolean;};};};items2:string;};result1?:undefined;}|{data:{data:{data:{data:number;};};result1:{data:string;};items2:(number|(string|boolean)[])[];};result1:{data:{data:{data:number;};result1:string;items2:(boolean|{data:boolean;})[];};};})[];};}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.id)}\`, { method: 'get', query:omit(data, 'pid','name','id'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.id)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidNameGetById = <T extends {price:number;status:string;productId:string;'pid':string;'name':string;'id':string;}, R extends {data:{data:string;result1:(boolean|{data:number;result1:{data:{data:{};};result1:boolean;items2:number;};})[];};result1:number;items2:{data:(number|{data:{data:boolean;result1:{data:{data:{data:boolean;};};};items2:string;};result1?:undefined;}|{data:{data:{data:{data:number;};};result1:{data:string;};items2:(number|(string|boolean)[])[];};result1:{data:{data:{data:number;};result1:string;items2:(boolean|{data:boolean;})[];};};})[];};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.id)}\`, { method: \`get\`, query:omit(data, 'pid','name','id'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.id)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidNameGetByIdAsync = <T extends {price:number;status:string;productId:string;'pid':string;'name':string;'id':string;}, R extends {data:{data:string;result1:(boolean|{data:number;result1:{data:{data:{};};result1:boolean;items2:number;};})[];};result1:number;items2:{data:(number|{data:{data:boolean;result1:{data:{data:{data:boolean;};};};items2:string;};result1?:undefined;}|{data:{data:{data:{data:number;};};result1:{data:string;};items2:(number|(string|boolean)[])[];};result1:{data:{data:{data:number;};result1:string;items2:(boolean|{data:boolean;})[];};};})[];};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:string;result1:(boolean|{data:number;result1:{data:{data:{};};result1:boolean;items2:number;};})[];};result1:number;items2:{data:(number|{data:{data:boolean;result1:{data:{data:{data:boolean;};};};items2:string;};result1?:undefined;}|{data:{data:{data:{data:number;};};result1:{data:string;};items2:(number|(string|boolean)[])[];};result1:{data:{data:{data:number;};result1:string;items2:(boolean|{data:boolean;})[];};};})[];};}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.id)}\`, { method: \`get\`, query:omit(data, 'pid','name','id'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/[name]/messages.get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidNameMessagesGet = <T extends {count:number;itemId:string;'pid':string;'name':string;}, R extends {data:{data:{data:number;result1:{data:boolean;result1:string;items2:{data:{};};};items2:{data:boolean[];result1:{data:number;};items2:number;};};result1:number;};result1:string;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/messages\`, { method: 'get', query:omit(data, 'pid','name'), ...opt })
-export const useTFetchPidNameMessagesGetAsync = <T extends {count:number;itemId:string;'pid':string;'name':string;}, R extends {data:{data:{data:number;result1:{data:boolean;result1:string;items2:{data:{};};};items2:{data:boolean[];result1:{data:number;};items2:number;};};result1:number;};result1:string;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:number;result1:{data:boolean;result1:string;items2:{data:{};};};items2:{data:boolean[];result1:{data:number;};items2:number;};};result1:number;};result1:string;}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/messages\`, { method: 'get', query:omit(data, 'pid','name'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/messages\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidNameMessagesGet = <T extends {count:number;itemId:string;'pid':string;'name':string;}, R extends {data:{data:{data:number;result1:{data:boolean;result1:string;items2:{data:{};};};items2:{data:boolean[];result1:{data:number;};items2:number;};};result1:number;};result1:string;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/messages\`, { method: \`get\`, query:omit(data, 'pid','name'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/messages\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidNameMessagesGetAsync = <T extends {count:number;itemId:string;'pid':string;'name':string;}, R extends {data:{data:{data:number;result1:{data:boolean;result1:string;items2:{data:{};};};items2:{data:boolean[];result1:{data:number;};items2:number;};};result1:number;};result1:string;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:number;result1:{data:boolean;result1:string;items2:{data:{};};};items2:{data:boolean[];result1:{data:number;};items2:number;};};result1:number;};result1:string;}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/messages\`, { method: \`get\`, query:omit(data, 'pid','name'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/[name]/posts/[variantId].delete.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidNamePostsRemoveByVariantId = <T extends {'pid':string;'name':string;'variantId':string;}&{viewId:string;isActive:boolean;age:number;}|{nextId:string;outerId:string;}, R extends {data:{data:{data:boolean;};result1:(boolean|(number|{data:number;result1:boolean;items2:boolean;})[][])[];};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/posts/\${encodeURIComponent(data.variantId)}\`, { method: 'delete', query:omit(data, 'pid','name','variantId'), ...opt })
-export const useTFetchPidNamePostsRemoveByVariantIdAsync = <T extends {'pid':string;'name':string;'variantId':string;}&{viewId:string;isActive:boolean;age:number;}|{nextId:string;outerId:string;}, R extends {data:{data:{data:boolean;};result1:(boolean|(number|{data:number;result1:boolean;items2:boolean;})[][])[];};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:boolean;};result1:(boolean|(number|{data:number;result1:boolean;items2:boolean;})[][])[];};}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/posts/\${encodeURIComponent(data.variantId)}\`, { method: 'delete', query:omit(data, 'pid','name','variantId'), ...opt })
+/**
+ * Generates a composable that sends a \`delete\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/posts/\${encodeURIComponent(data.variantId)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidNamePostsRemoveByVariantId = <T extends {'pid':string;'name':string;'variantId':string;}&{viewId:string;isActive:boolean;age:number;}|{nextId:string;outerId:string;}, R extends {data:{data:{data:boolean;};result1:(boolean|(number|{data:number;result1:boolean;items2:boolean;})[][])[];};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/posts/\${encodeURIComponent(data.variantId)}\`, { method: \`delete\`, query:omit(data, 'pid','name','variantId'), ...opt })
+/**
+ * Generates a composable that sends a \`delete\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/posts/\${encodeURIComponent(data.variantId)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidNamePostsRemoveByVariantIdAsync = <T extends {'pid':string;'name':string;'variantId':string;}&{viewId:string;isActive:boolean;age:number;}|{nextId:string;outerId:string;}, R extends {data:{data:{data:boolean;};result1:(boolean|(number|{data:number;result1:boolean;items2:boolean;})[][])[];};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:boolean;};result1:(boolean|(number|{data:number;result1:boolean;items2:boolean;})[][])[];};}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/posts/\${encodeURIComponent(data.variantId)}\`, { method: \`delete\`, query:omit(data, 'pid','name','variantId'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/[name]/tags.delete.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidNameTagsRemove = <T extends {productId:string;age:number;isActive:boolean;'pid':string;'name':string;}, R extends {data:{data:{data:boolean;result1:number;items2:boolean;};result1:number;items2:{data:{data:{data:string;}[];result1:string;};result1:boolean;items2:{data:{data:{data:{};};};};};};result1:{data:number;result1:number;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/tags\`, { method: 'delete', query:omit(data, 'pid','name'), ...opt })
-export const useTFetchPidNameTagsRemoveAsync = <T extends {productId:string;age:number;isActive:boolean;'pid':string;'name':string;}, R extends {data:{data:{data:boolean;result1:number;items2:boolean;};result1:number;items2:{data:{data:{data:string;}[];result1:string;};result1:boolean;items2:{data:{data:{data:{};};};};};};result1:{data:number;result1:number;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:boolean;result1:number;items2:boolean;};result1:number;items2:{data:{data:{data:string;}[];result1:string;};result1:boolean;items2:{data:{data:{data:{};};};};};};result1:{data:number;result1:number;};}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/tags\`, { method: 'delete', query:omit(data, 'pid','name'), ...opt })
+/**
+ * Generates a composable that sends a \`delete\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/tags\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidNameTagsRemove = <T extends {productId:string;age:number;isActive:boolean;'pid':string;'name':string;}, R extends {data:{data:{data:boolean;result1:number;items2:boolean;};result1:number;items2:{data:{data:{data:string;}[];result1:string;};result1:boolean;items2:{data:{data:{data:{};};};};};};result1:{data:number;result1:number;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/tags\`, { method: \`delete\`, query:omit(data, 'pid','name'), ...opt })
+/**
+ * Generates a composable that sends a \`delete\` request to \`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/tags\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidNameTagsRemoveAsync = <T extends {productId:string;age:number;isActive:boolean;'pid':string;'name':string;}, R extends {data:{data:{data:boolean;result1:number;items2:boolean;};result1:number;items2:{data:{data:{data:string;}[];result1:string;};result1:boolean;items2:{data:{data:{data:{};};};};};};result1:{data:number;result1:number;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:boolean;result1:number;items2:boolean;};result1:number;items2:{data:{data:{data:string;}[];result1:string;};result1:boolean;items2:{data:{data:{data:{};};};};};};result1:{data:number;result1:number;};}>(\`/api/\${encodeURIComponent(data.pid)}/\${encodeURIComponent(data.name)}/tags\`, { method: \`delete\`, query:omit(data, 'pid','name'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/categories/[uid]/orders.post.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidCategoriesUidOrdersCreate = <T extends {age:number;createdAt:string;innerId:string;'pid':string;'uid':string;}, R extends {data:{data:{data:{data:number[];};}[];result1:{data:{data:{data:{}[];};result1:{data:boolean;}[];items2:string;};result1:{data:number;result1:({data:{};}|(boolean|{data:string;})[])[];items2:number;};items2:{data:string;};};items2:boolean;}[];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/categories/\${encodeURIComponent(data.uid)}/orders\`, { method: 'post', body:omit(data, 'pid','uid'), ...opt })
-export const useTFetchPidCategoriesUidOrdersCreateAsync = <T extends {age:number;createdAt:string;innerId:string;'pid':string;'uid':string;}, R extends {data:{data:{data:{data:number[];};}[];result1:{data:{data:{data:{}[];};result1:{data:boolean;}[];items2:string;};result1:{data:number;result1:({data:{};}|(boolean|{data:string;})[])[];items2:number;};items2:{data:string;};};items2:boolean;}[];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:{data:number[];};}[];result1:{data:{data:{data:{}[];};result1:{data:boolean;}[];items2:string;};result1:{data:number;result1:({data:{};}|(boolean|{data:string;})[])[];items2:number;};items2:{data:string;};};items2:boolean;}[];}>(\`/api/\${encodeURIComponent(data.pid)}/categories/\${encodeURIComponent(data.uid)}/orders\`, { method: 'post', body:omit(data, 'pid','uid'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/\${encodeURIComponent(data.pid)}/categories/\${encodeURIComponent(data.uid)}/orders\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidCategoriesUidOrdersCreate = <T extends {age:number;createdAt:string;innerId:string;'pid':string;'uid':string;}, R extends {data:{data:{data:{data:number[];};}[];result1:{data:{data:{data:{}[];};result1:{data:boolean;}[];items2:string;};result1:{data:number;result1:({data:{};}|(boolean|{data:string;})[])[];items2:number;};items2:{data:string;};};items2:boolean;}[];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/categories/\${encodeURIComponent(data.uid)}/orders\`, { method: \`post\`, body:omit(data, 'pid','uid'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/\${encodeURIComponent(data.pid)}/categories/\${encodeURIComponent(data.uid)}/orders\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidCategoriesUidOrdersCreateAsync = <T extends {age:number;createdAt:string;innerId:string;'pid':string;'uid':string;}, R extends {data:{data:{data:{data:number[];};}[];result1:{data:{data:{data:{}[];};result1:{data:boolean;}[];items2:string;};result1:{data:number;result1:({data:{};}|(boolean|{data:string;})[])[];items2:number;};items2:{data:string;};};items2:boolean;}[];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:{data:number[];};}[];result1:{data:{data:{data:{}[];};result1:{data:boolean;}[];items2:string;};result1:{data:number;result1:({data:{};}|(boolean|{data:string;})[])[];items2:number;};items2:{data:string;};};items2:boolean;}[];}>(\`/api/\${encodeURIComponent(data.pid)}/categories/\${encodeURIComponent(data.uid)}/orders\`, { method: \`post\`, body:omit(data, 'pid','uid'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/settings/[name]/[vid]/products.post.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidSettingsNameVidProductsCreate = <T extends {'pid':string;'name':string;'vid':string;}&{updatedAt:string;outerId:string;}|{age:number;}, R extends {data:number;result1:boolean;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/settings/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.vid)}/products\`, { method: 'post', body:omit(data, 'pid','name','vid'), ...opt })
-export const useTFetchPidSettingsNameVidProductsCreateAsync = <T extends {'pid':string;'name':string;'vid':string;}&{updatedAt:string;outerId:string;}|{age:number;}, R extends {data:number;result1:boolean;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number;result1:boolean;}>(\`/api/\${encodeURIComponent(data.pid)}/settings/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.vid)}/products\`, { method: 'post', body:omit(data, 'pid','name','vid'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/\${encodeURIComponent(data.pid)}/settings/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.vid)}/products\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidSettingsNameVidProductsCreate = <T extends {'pid':string;'name':string;'vid':string;}&{updatedAt:string;outerId:string;}|{age:number;}, R extends {data:number;result1:boolean;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/settings/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.vid)}/products\`, { method: \`post\`, body:omit(data, 'pid','name','vid'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/\${encodeURIComponent(data.pid)}/settings/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.vid)}/products\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidSettingsNameVidProductsCreateAsync = <T extends {'pid':string;'name':string;'vid':string;}&{updatedAt:string;outerId:string;}|{age:number;}, R extends {data:number;result1:boolean;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number;result1:boolean;}>(\`/api/\${encodeURIComponent(data.pid)}/settings/\${encodeURIComponent(data.name)}/\${encodeURIComponent(data.vid)}/products\`, { method: \`post\`, body:omit(data, 'pid','name','vid'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/settings/messages/settings/[slug].get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidSettingsMessagesSettingsGetBySlug = <T extends {'pid':string;'slug':string;}&{viewId:string;createdAt:string;email:string;}|{productId:string;nextId:string;age:number;}, R extends {data:number[];result1:boolean;items2:{data:boolean;};vid:any;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/settings/messages/settings/\${encodeURIComponent(data.slug)}\`, { method: 'get', query:omit(data, 'pid','slug'), ...opt })
-export const useTFetchPidSettingsMessagesSettingsGetBySlugAsync = <T extends {'pid':string;'slug':string;}&{viewId:string;createdAt:string;email:string;}|{productId:string;nextId:string;age:number;}, R extends {data:number[];result1:boolean;items2:{data:boolean;};vid:any;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number[];result1:boolean;items2:{data:boolean;};vid:any;}>(\`/api/\${encodeURIComponent(data.pid)}/settings/messages/settings/\${encodeURIComponent(data.slug)}\`, { method: 'get', query:omit(data, 'pid','slug'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}/settings/messages/settings/\${encodeURIComponent(data.slug)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidSettingsMessagesSettingsGetBySlug = <T extends {'pid':string;'slug':string;}&{viewId:string;createdAt:string;email:string;}|{productId:string;nextId:string;age:number;}, R extends {data:number[];result1:boolean;items2:{data:boolean;};vid:any;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/settings/messages/settings/\${encodeURIComponent(data.slug)}\`, { method: \`get\`, query:omit(data, 'pid','slug'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}/settings/messages/settings/\${encodeURIComponent(data.slug)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidSettingsMessagesSettingsGetBySlugAsync = <T extends {'pid':string;'slug':string;}&{viewId:string;createdAt:string;email:string;}|{productId:string;nextId:string;age:number;}, R extends {data:number[];result1:boolean;items2:{data:boolean;};vid:any;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number[];result1:boolean;items2:{data:boolean;};vid:any;}>(\`/api/\${encodeURIComponent(data.pid)}/settings/messages/settings/\${encodeURIComponent(data.slug)}\`, { method: \`get\`, query:omit(data, 'pid','slug'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/tags/[categoryId].post.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidTagsCreateByCategoryId = <T extends {'pid':string;'categoryId':string;}&{outerId:string;status:string;email:string;}|{createdAt:string;age:number;}, R extends {data:{data:(string|boolean|{data:{data:{data:string;result1:{data:boolean;};};result1:{data:{data:boolean;result1:string;};};items2:((number|boolean)[]|{data:number;result1:number;items2:string;}|{data:string;result1:number;items2:string;})[];}[];result1:{data:boolean;result1:({data:boolean[];result1:string;items2?:undefined;}|{data:boolean;result1:string[];items2:(number|boolean)[];})[];};})[];};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/tags/\${encodeURIComponent(data.categoryId)}\`, { method: 'post', body:omit(data, 'pid','categoryId'), ...opt })
-export const useTFetchPidTagsCreateByCategoryIdAsync = <T extends {'pid':string;'categoryId':string;}&{outerId:string;status:string;email:string;}|{createdAt:string;age:number;}, R extends {data:{data:(string|boolean|{data:{data:{data:string;result1:{data:boolean;};};result1:{data:{data:boolean;result1:string;};};items2:((number|boolean)[]|{data:number;result1:number;items2:string;}|{data:string;result1:number;items2:string;})[];}[];result1:{data:boolean;result1:({data:boolean[];result1:string;items2?:undefined;}|{data:boolean;result1:string[];items2:(number|boolean)[];})[];};})[];};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:(string|boolean|{data:{data:{data:string;result1:{data:boolean;};};result1:{data:{data:boolean;result1:string;};};items2:((number|boolean)[]|{data:number;result1:number;items2:string;}|{data:string;result1:number;items2:string;})[];}[];result1:{data:boolean;result1:({data:boolean[];result1:string;items2?:undefined;}|{data:boolean;result1:string[];items2:(number|boolean)[];})[];};})[];};}>(\`/api/\${encodeURIComponent(data.pid)}/tags/\${encodeURIComponent(data.categoryId)}\`, { method: 'post', body:omit(data, 'pid','categoryId'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/\${encodeURIComponent(data.pid)}/tags/\${encodeURIComponent(data.categoryId)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidTagsCreateByCategoryId = <T extends {'pid':string;'categoryId':string;}&{outerId:string;status:string;email:string;}|{createdAt:string;age:number;}, R extends {data:{data:(string|boolean|{data:{data:{data:string;result1:{data:boolean;};};result1:{data:{data:boolean;result1:string;};};items2:((number|boolean)[]|{data:number;result1:number;items2:string;}|{data:string;result1:number;items2:string;})[];}[];result1:{data:boolean;result1:({data:boolean[];result1:string;items2?:undefined;}|{data:boolean;result1:string[];items2:(number|boolean)[];})[];};})[];};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/tags/\${encodeURIComponent(data.categoryId)}\`, { method: \`post\`, body:omit(data, 'pid','categoryId'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/\${encodeURIComponent(data.pid)}/tags/\${encodeURIComponent(data.categoryId)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidTagsCreateByCategoryIdAsync = <T extends {'pid':string;'categoryId':string;}&{outerId:string;status:string;email:string;}|{createdAt:string;age:number;}, R extends {data:{data:(string|boolean|{data:{data:{data:string;result1:{data:boolean;};};result1:{data:{data:boolean;result1:string;};};items2:((number|boolean)[]|{data:number;result1:number;items2:string;}|{data:string;result1:number;items2:string;})[];}[];result1:{data:boolean;result1:({data:boolean[];result1:string;items2?:undefined;}|{data:boolean;result1:string[];items2:(number|boolean)[];})[];};})[];};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:(string|boolean|{data:{data:{data:string;result1:{data:boolean;};};result1:{data:{data:boolean;result1:string;};};items2:((number|boolean)[]|{data:number;result1:number;items2:string;}|{data:string;result1:number;items2:string;})[];}[];result1:{data:boolean;result1:({data:boolean[];result1:string;items2?:undefined;}|{data:boolean;result1:string[];items2:(number|boolean)[];})[];};})[];};}>(\`/api/\${encodeURIComponent(data.pid)}/tags/\${encodeURIComponent(data.categoryId)}\`, { method: \`post\`, body:omit(data, 'pid','categoryId'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /[pid]/users/[categoryId]/tags/tags.get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPidUsersCategoryIdTagsTagsGet = <T extends {count:number;email:string;'pid':string;'categoryId':string;}, R extends {data:number;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/users/\${encodeURIComponent(data.categoryId)}/tags/tags\`, { method: 'get', query:omit(data, 'pid','categoryId'), ...opt })
-export const useTFetchPidUsersCategoryIdTagsTagsGetAsync = <T extends {count:number;email:string;'pid':string;'categoryId':string;}, R extends {data:number;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number;}>(\`/api/\${encodeURIComponent(data.pid)}/users/\${encodeURIComponent(data.categoryId)}/tags/tags\`, { method: 'get', query:omit(data, 'pid','categoryId'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}/users/\${encodeURIComponent(data.categoryId)}/tags/tags\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidUsersCategoryIdTagsTagsGet = <T extends {count:number;email:string;'pid':string;'categoryId':string;}, R extends {data:number;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/\${encodeURIComponent(data.pid)}/users/\${encodeURIComponent(data.categoryId)}/tags/tags\`, { method: \`get\`, query:omit(data, 'pid','categoryId'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/\${encodeURIComponent(data.pid)}/users/\${encodeURIComponent(data.categoryId)}/tags/tags\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPidUsersCategoryIdTagsTagsGetAsync = <T extends {count:number;email:string;'pid':string;'categoryId':string;}, R extends {data:number;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number;}>(\`/api/\${encodeURIComponent(data.pid)}/users/\${encodeURIComponent(data.categoryId)}/tags/tags\`, { method: \`get\`, query:omit(data, 'pid','categoryId'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /categories.put.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchCategoriesUpdate = <T extends Omit<{updatedAt:string;email:string;outerId:string;viewId:string;},'updatedAt'>&Partial<{prevId:string;}>, R extends {data:{data:number;result1:({data:number;result1:boolean;items2:number;}[][][]|{data:boolean;result1:(boolean[]|{data:number;result1:number;})[][];items2:{data:number;result1:boolean;}[];})[][];items2:string;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/categories\`, { method: 'put', body:data, ...opt })
-export const useTFetchCategoriesUpdateAsync = <T extends Omit<{updatedAt:string;email:string;outerId:string;viewId:string;},'updatedAt'>&Partial<{prevId:string;}>, R extends {data:{data:number;result1:({data:number;result1:boolean;items2:number;}[][][]|{data:boolean;result1:(boolean[]|{data:number;result1:number;})[][];items2:{data:number;result1:boolean;}[];})[][];items2:string;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:number;result1:({data:number;result1:boolean;items2:number;}[][][]|{data:boolean;result1:(boolean[]|{data:number;result1:number;})[][];items2:{data:number;result1:boolean;}[];})[][];items2:string;};}>(\`/api/categories\`, { method: 'put', body:data, ...opt })
+/**
+ * Generates a composable that sends a \`put\` request to \`/api/categories\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchCategoriesUpdate = <T extends Omit<{updatedAt:string;email:string;outerId:string;viewId:string;},'updatedAt'>&Partial<{prevId:string;}>, R extends {data:{data:number;result1:({data:number;result1:boolean;items2:number;}[][][]|{data:boolean;result1:(boolean[]|{data:number;result1:number;})[][];items2:{data:number;result1:boolean;}[];})[][];items2:string;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/categories\`, { method: \`put\`, body:data, ...opt })
+/**
+ * Generates a composable that sends a \`put\` request to \`/api/categories\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchCategoriesUpdateAsync = <T extends Omit<{updatedAt:string;email:string;outerId:string;viewId:string;},'updatedAt'>&Partial<{prevId:string;}>, R extends {data:{data:number;result1:({data:number;result1:boolean;items2:number;}[][][]|{data:boolean;result1:(boolean[]|{data:number;result1:number;})[][];items2:{data:number;result1:boolean;}[];})[][];items2:string;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:number;result1:({data:number;result1:boolean;items2:number;}[][][]|{data:boolean;result1:(boolean[]|{data:number;result1:number;})[][];items2:{data:number;result1:boolean;}[];})[][];items2:string;};}>(\`/api/categories\`, { method: \`put\`, body:data, ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /comments/[id]/products/[uid].get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchCommentsIdProductsGetByUid = <T extends {email:string;updatedAt:string;'id':string;'uid':string;}, R extends {data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\`, { method: 'get', query:omit(data, 'id','uid'), ...opt })
-export const useTFetchCommentsIdProductsGetByUidAsync = <T extends {email:string;updatedAt:string;'id':string;'uid':string;}, R extends {data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(\`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\`, { method: 'get', query:omit(data, 'id','uid'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchCommentsIdProductsGetByUid = <T extends {email:string;updatedAt:string;'id':string;'uid':string;}, R extends {data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\`, { method: \`get\`, query:omit(data, 'id','uid'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchCommentsIdProductsGetByUidAsync = <T extends {email:string;updatedAt:string;'id':string;'uid':string;}, R extends {data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(\`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\`, { method: \`get\`, query:omit(data, 'id','uid'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /comments/tags/posts.delete.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchCommentsTagsPostsRemove = <T extends {outerId:string;viewId:string;title:string;}, R extends {data:(number|{data:number;result1:(boolean|boolean[]|{data:boolean;result1:{data:{data:boolean;};result1:number;};}[])[];items2:{data:string;result1:boolean[];items2:{data:{data:number[];result1:{data:{};};};};};})[];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/comments/tags/posts\`, { method: 'delete', query:data, ...opt })
-export const useTFetchCommentsTagsPostsRemoveAsync = <T extends {outerId:string;viewId:string;title:string;}, R extends {data:(number|{data:number;result1:(boolean|boolean[]|{data:boolean;result1:{data:{data:boolean;};result1:number;};}[])[];items2:{data:string;result1:boolean[];items2:{data:{data:number[];result1:{data:{};};};};};})[];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:(number|{data:number;result1:(boolean|boolean[]|{data:boolean;result1:{data:{data:boolean;};result1:number;};}[])[];items2:{data:string;result1:boolean[];items2:{data:{data:number[];result1:{data:{};};};};};})[];}>(\`/api/comments/tags/posts\`, { method: 'delete', query:data, ...opt })
+/**
+ * Generates a composable that sends a \`delete\` request to \`/api/comments/tags/posts\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchCommentsTagsPostsRemove = <T extends {outerId:string;viewId:string;title:string;}, R extends {data:(number|{data:number;result1:(boolean|boolean[]|{data:boolean;result1:{data:{data:boolean;};result1:number;};}[])[];items2:{data:string;result1:boolean[];items2:{data:{data:number[];result1:{data:{};};};};};})[];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/comments/tags/posts\`, { method: \`delete\`, query:data, ...opt })
+/**
+ * Generates a composable that sends a \`delete\` request to \`/api/comments/tags/posts\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchCommentsTagsPostsRemoveAsync = <T extends {outerId:string;viewId:string;title:string;}, R extends {data:(number|{data:number;result1:(boolean|boolean[]|{data:boolean;result1:{data:{data:boolean;};result1:number;};}[])[];items2:{data:string;result1:boolean[];items2:{data:{data:number[];result1:{data:{};};};};};})[];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:(number|{data:number;result1:(boolean|boolean[]|{data:boolean;result1:{data:{data:boolean;};result1:number;};}[])[];items2:{data:string;result1:boolean[];items2:{data:{data:number[];result1:{data:{};};};};};})[];}>(\`/api/comments/tags/posts\`, { method: \`delete\`, query:data, ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /messages/profiles/[postId]/[orderId]/[postId].post.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchMessagesProfilesPostIdOrderIdCreateByPostId = <T extends {postId:string;orderId:string;}&{status:string;innerId:string;}&{prevId:string;}, R extends {data:{data:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\`, { method: 'post', body:omit(data, 'postId','orderId','postId'), ...opt })
-export const useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync = <T extends {postId:string;orderId:string;}&{status:string;innerId:string;}&{prevId:string;}, R extends {data:{data:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:boolean;};}>(\`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\`, { method: 'post', body:omit(data, 'postId','orderId','postId'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchMessagesProfilesPostIdOrderIdCreateByPostId = <T extends {postId:string;orderId:string;}&{status:string;innerId:string;}&{prevId:string;}, R extends {data:{data:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\`, { method: \`post\`, body:omit(data, 'postId','orderId','postId'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync = <T extends {postId:string;orderId:string;}&{status:string;innerId:string;}&{prevId:string;}, R extends {data:{data:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:boolean;};}>(\`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\`, { method: \`post\`, body:omit(data, 'postId','orderId','postId'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /posts/[variant-id]/profiles.get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPostsVariantIdProfilesGet = <T extends {'variantId':string;}&{price:number;createdAt:string;}|{count:number;status:string;}, R extends {data:string;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/posts/\${encodeURIComponent(data.variant-id)}/profiles\`, { method: 'get', query:omit(data, 'variant-id'), ...opt })
-export const useTFetchPostsVariantIdProfilesGetAsync = <T extends {'variantId':string;}&{price:number;createdAt:string;}|{count:number;status:string;}, R extends {data:string;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:string;}>(\`/api/posts/\${encodeURIComponent(data.variant-id)}/profiles\`, { method: 'get', query:omit(data, 'variant-id'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/posts/\${encodeURIComponent(data.variant-id)}/profiles\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPostsVariantIdProfilesGet = <T extends {'variantId':string;}&{price:number;createdAt:string;}|{count:number;status:string;}, R extends {data:string;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/posts/\${encodeURIComponent(data.variant-id)}/profiles\`, { method: \`get\`, query:omit(data, 'variant-id'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/posts/\${encodeURIComponent(data.variant-id)}/profiles\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPostsVariantIdProfilesGetAsync = <T extends {'variantId':string;}&{price:number;createdAt:string;}|{count:number;status:string;}, R extends {data:string;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:string;}>(\`/api/posts/\${encodeURIComponent(data.variant-id)}/profiles\`, { method: \`get\`, query:omit(data, 'variant-id'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /posts/[variant-id]/tags/[category-id]/products.post.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchPostsVariantIdTagsCategoryIdProductsCreate = <T extends {updatedAt:string;createdAt:string;'variantId':string;'categoryId':string;}, R extends {data:{data:{data:(number|{data:number;result1:{data:number;}[];}[]|(string|{data:number[];}[]|{data:{data:{data:string;};result1:{data:string;};};result1:boolean[][];items2:boolean;})[])[];};};result1:{data:{data:{data:(boolean|{data:{data:number;};})[];};result1:{data:{data:number;};};items2:boolean;};result1:{data:boolean;};items2:{data:{data:{data:{data:(boolean|{data:boolean;}|{data:number;})[];};};};};};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/posts/\${encodeURIComponent(data.variant-id)}/tags/\${encodeURIComponent(data.category-id)}/products\`, { method: 'post', body:omit(data, 'variant-id','category-id'), ...opt })
-export const useTFetchPostsVariantIdTagsCategoryIdProductsCreateAsync = <T extends {updatedAt:string;createdAt:string;'variantId':string;'categoryId':string;}, R extends {data:{data:{data:(number|{data:number;result1:{data:number;}[];}[]|(string|{data:number[];}[]|{data:{data:{data:string;};result1:{data:string;};};result1:boolean[][];items2:boolean;})[])[];};};result1:{data:{data:{data:(boolean|{data:{data:number;};})[];};result1:{data:{data:number;};};items2:boolean;};result1:{data:boolean;};items2:{data:{data:{data:{data:(boolean|{data:boolean;}|{data:number;})[];};};};};};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:(number|{data:number;result1:{data:number;}[];}[]|(string|{data:number[];}[]|{data:{data:{data:string;};result1:{data:string;};};result1:boolean[][];items2:boolean;})[])[];};};result1:{data:{data:{data:(boolean|{data:{data:number;};})[];};result1:{data:{data:number;};};items2:boolean;};result1:{data:boolean;};items2:{data:{data:{data:{data:(boolean|{data:boolean;}|{data:number;})[];};};};};};}>(\`/api/posts/\${encodeURIComponent(data.variant-id)}/tags/\${encodeURIComponent(data.category-id)}/products\`, { method: 'post', body:omit(data, 'variant-id','category-id'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/posts/\${encodeURIComponent(data.variant-id)}/tags/\${encodeURIComponent(data.category-id)}/products\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPostsVariantIdTagsCategoryIdProductsCreate = <T extends {updatedAt:string;createdAt:string;'variantId':string;'categoryId':string;}, R extends {data:{data:{data:(number|{data:number;result1:{data:number;}[];}[]|(string|{data:number[];}[]|{data:{data:{data:string;};result1:{data:string;};};result1:boolean[][];items2:boolean;})[])[];};};result1:{data:{data:{data:(boolean|{data:{data:number;};})[];};result1:{data:{data:number;};};items2:boolean;};result1:{data:boolean;};items2:{data:{data:{data:{data:(boolean|{data:boolean;}|{data:number;})[];};};};};};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/posts/\${encodeURIComponent(data.variant-id)}/tags/\${encodeURIComponent(data.category-id)}/products\`, { method: \`post\`, body:omit(data, 'variant-id','category-id'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/posts/\${encodeURIComponent(data.variant-id)}/tags/\${encodeURIComponent(data.category-id)}/products\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchPostsVariantIdTagsCategoryIdProductsCreateAsync = <T extends {updatedAt:string;createdAt:string;'variantId':string;'categoryId':string;}, R extends {data:{data:{data:(number|{data:number;result1:{data:number;}[];}[]|(string|{data:number[];}[]|{data:{data:{data:string;};result1:{data:string;};};result1:boolean[][];items2:boolean;})[])[];};};result1:{data:{data:{data:(boolean|{data:{data:number;};})[];};result1:{data:{data:number;};};items2:boolean;};result1:{data:boolean;};items2:{data:{data:{data:{data:(boolean|{data:boolean;}|{data:number;})[];};};};};};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:(number|{data:number;result1:{data:number;}[];}[]|(string|{data:number[];}[]|{data:{data:{data:string;};result1:{data:string;};};result1:boolean[][];items2:boolean;})[])[];};};result1:{data:{data:{data:(boolean|{data:{data:number;};})[];};result1:{data:{data:number;};};items2:boolean;};result1:{data:boolean;};items2:{data:{data:{data:{data:(boolean|{data:boolean;}|{data:number;})[];};};};};};}>(\`/api/posts/\${encodeURIComponent(data.variant-id)}/tags/\${encodeURIComponent(data.category-id)}/products\`, { method: \`post\`, body:omit(data, 'variant-id','category-id'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /products/[slug]/[name]/tags/users.get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchProductsSlugNameTagsUsersGet = <T extends {outerId:string;productId:string;'slug':string;'name':string;}, R extends {data:{data:boolean;result1:{data:{data:{data:string;result1:boolean;};result1:string;};result1:boolean[];items2:boolean;};}[];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/products/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.name)}/tags/users\`, { method: 'get', query:omit(data, 'slug','name'), ...opt })
-export const useTFetchProductsSlugNameTagsUsersGetAsync = <T extends {outerId:string;productId:string;'slug':string;'name':string;}, R extends {data:{data:boolean;result1:{data:{data:{data:string;result1:boolean;};result1:string;};result1:boolean[];items2:boolean;};}[];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:boolean;result1:{data:{data:{data:string;result1:boolean;};result1:string;};result1:boolean[];items2:boolean;};}[];}>(\`/api/products/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.name)}/tags/users\`, { method: 'get', query:omit(data, 'slug','name'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/products/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.name)}/tags/users\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchProductsSlugNameTagsUsersGet = <T extends {outerId:string;productId:string;'slug':string;'name':string;}, R extends {data:{data:boolean;result1:{data:{data:{data:string;result1:boolean;};result1:string;};result1:boolean[];items2:boolean;};}[];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/products/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.name)}/tags/users\`, { method: \`get\`, query:omit(data, 'slug','name'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/products/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.name)}/tags/users\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchProductsSlugNameTagsUsersGetAsync = <T extends {outerId:string;productId:string;'slug':string;'name':string;}, R extends {data:{data:boolean;result1:{data:{data:{data:string;result1:boolean;};result1:string;};result1:boolean[];items2:boolean;};}[];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:boolean;result1:{data:{data:{data:string;result1:boolean;};result1:string;};result1:boolean[];items2:boolean;};}[];}>(\`/api/products/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.name)}/tags/users\`, { method: \`get\`, query:omit(data, 'slug','name'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /products/posts/[user-id].put.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchProductsPostsUpdateByUserId = <T extends {prevId:string;age:number;price:number;'userId':string;}, R extends {data:{data:number;result1:boolean;items2:{data:(number|string[])[][];result1:(boolean|{data:(string|boolean|(string|(string|number|boolean)[])[])[];})[];items2:{data:{data:{};};result1:{data:number;};};};};result1:{data:{data:{data:((number|{data:(string|boolean)[];}|(boolean|boolean[]|string[])[])[]|{data:(number[]|{data:number;})[];})[];result1:{data:number;};};result1:(string[]|(boolean|{data:(boolean|{data:boolean;})[];result1:number;items2?:undefined;}|{data:{data:{};};result1:{data:string[];};items2:(boolean|(number|boolean)[]|{data:boolean;})[];})[]|{data:{data:boolean;};})[];items2:{data:boolean;};};result1:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/products/posts/\${encodeURIComponent(data.user-id)}\`, { method: 'put', body:omit(data, 'user-id'), ...opt })
-export const useTFetchProductsPostsUpdateByUserIdAsync = <T extends {prevId:string;age:number;price:number;'userId':string;}, R extends {data:{data:number;result1:boolean;items2:{data:(number|string[])[][];result1:(boolean|{data:(string|boolean|(string|(string|number|boolean)[])[])[];})[];items2:{data:{data:{};};result1:{data:number;};};};};result1:{data:{data:{data:((number|{data:(string|boolean)[];}|(boolean|boolean[]|string[])[])[]|{data:(number[]|{data:number;})[];})[];result1:{data:number;};};result1:(string[]|(boolean|{data:(boolean|{data:boolean;})[];result1:number;items2?:undefined;}|{data:{data:{};};result1:{data:string[];};items2:(boolean|(number|boolean)[]|{data:boolean;})[];})[]|{data:{data:boolean;};})[];items2:{data:boolean;};};result1:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:number;result1:boolean;items2:{data:(number|string[])[][];result1:(boolean|{data:(string|boolean|(string|(string|number|boolean)[])[])[];})[];items2:{data:{data:{};};result1:{data:number;};};};};result1:{data:{data:{data:((number|{data:(string|boolean)[];}|(boolean|boolean[]|string[])[])[]|{data:(number[]|{data:number;})[];})[];result1:{data:number;};};result1:(string[]|(boolean|{data:(boolean|{data:boolean;})[];result1:number;items2?:undefined;}|{data:{data:{};};result1:{data:string[];};items2:(boolean|(number|boolean)[]|{data:boolean;})[];})[]|{data:{data:boolean;};})[];items2:{data:boolean;};};result1:boolean;};}>(\`/api/products/posts/\${encodeURIComponent(data.user-id)}\`, { method: 'put', body:omit(data, 'user-id'), ...opt })
+/**
+ * Generates a composable that sends a \`put\` request to \`/api/products/posts/\${encodeURIComponent(data.user-id)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchProductsPostsUpdateByUserId = <T extends {prevId:string;age:number;price:number;'userId':string;}, R extends {data:{data:number;result1:boolean;items2:{data:(number|string[])[][];result1:(boolean|{data:(string|boolean|(string|(string|number|boolean)[])[])[];})[];items2:{data:{data:{};};result1:{data:number;};};};};result1:{data:{data:{data:((number|{data:(string|boolean)[];}|(boolean|boolean[]|string[])[])[]|{data:(number[]|{data:number;})[];})[];result1:{data:number;};};result1:(string[]|(boolean|{data:(boolean|{data:boolean;})[];result1:number;items2?:undefined;}|{data:{data:{};};result1:{data:string[];};items2:(boolean|(number|boolean)[]|{data:boolean;})[];})[]|{data:{data:boolean;};})[];items2:{data:boolean;};};result1:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/products/posts/\${encodeURIComponent(data.user-id)}\`, { method: \`put\`, body:omit(data, 'user-id'), ...opt })
+/**
+ * Generates a composable that sends a \`put\` request to \`/api/products/posts/\${encodeURIComponent(data.user-id)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchProductsPostsUpdateByUserIdAsync = <T extends {prevId:string;age:number;price:number;'userId':string;}, R extends {data:{data:number;result1:boolean;items2:{data:(number|string[])[][];result1:(boolean|{data:(string|boolean|(string|(string|number|boolean)[])[])[];})[];items2:{data:{data:{};};result1:{data:number;};};};};result1:{data:{data:{data:((number|{data:(string|boolean)[];}|(boolean|boolean[]|string[])[])[]|{data:(number[]|{data:number;})[];})[];result1:{data:number;};};result1:(string[]|(boolean|{data:(boolean|{data:boolean;})[];result1:number;items2?:undefined;}|{data:{data:{};};result1:{data:string[];};items2:(boolean|(number|boolean)[]|{data:boolean;})[];})[]|{data:{data:boolean;};})[];items2:{data:boolean;};};result1:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:number;result1:boolean;items2:{data:(number|string[])[][];result1:(boolean|{data:(string|boolean|(string|(string|number|boolean)[])[])[];})[];items2:{data:{data:{};};result1:{data:number;};};};};result1:{data:{data:{data:((number|{data:(string|boolean)[];}|(boolean|boolean[]|string[])[])[]|{data:(number[]|{data:number;})[];})[];result1:{data:number;};};result1:(string[]|(boolean|{data:(boolean|{data:boolean;})[];result1:number;items2?:undefined;}|{data:{data:{};};result1:{data:string[];};items2:(boolean|(number|boolean)[]|{data:boolean;})[];})[]|{data:{data:boolean;};})[];items2:{data:boolean;};};result1:boolean;};}>(\`/api/products/posts/\${encodeURIComponent(data.user-id)}\`, { method: \`put\`, body:omit(data, 'user-id'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /settings/[orderId].get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchSettingsGetByOrderId = <T extends {status:string;nextId:string;'orderId':string;}, R extends {data:number;result1:{data:string;result1:boolean;items2:{data:{data:boolean;};result1:boolean[];};};items2:{data:{data:{data:{data:(string|number[]|{data:number;})[][];};result1:{data:{data:{}[];};};};result1:number;items2:{data:((string|{data:number;})[][]|{data:string;})[];};};};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/settings/\${encodeURIComponent(data.orderId)}\`, { method: 'get', query:omit(data, 'orderId'), ...opt })
-export const useTFetchSettingsGetByOrderIdAsync = <T extends {status:string;nextId:string;'orderId':string;}, R extends {data:number;result1:{data:string;result1:boolean;items2:{data:{data:boolean;};result1:boolean[];};};items2:{data:{data:{data:{data:(string|number[]|{data:number;})[][];};result1:{data:{data:{}[];};};};result1:number;items2:{data:((string|{data:number;})[][]|{data:string;})[];};};};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number;result1:{data:string;result1:boolean;items2:{data:{data:boolean;};result1:boolean[];};};items2:{data:{data:{data:{data:(string|number[]|{data:number;})[][];};result1:{data:{data:{}[];};};};result1:number;items2:{data:((string|{data:number;})[][]|{data:string;})[];};};};}>(\`/api/settings/\${encodeURIComponent(data.orderId)}\`, { method: 'get', query:omit(data, 'orderId'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/settings/\${encodeURIComponent(data.orderId)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchSettingsGetByOrderId = <T extends {status:string;nextId:string;'orderId':string;}, R extends {data:number;result1:{data:string;result1:boolean;items2:{data:{data:boolean;};result1:boolean[];};};items2:{data:{data:{data:{data:(string|number[]|{data:number;})[][];};result1:{data:{data:{}[];};};};result1:number;items2:{data:((string|{data:number;})[][]|{data:string;})[];};};};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/settings/\${encodeURIComponent(data.orderId)}\`, { method: \`get\`, query:omit(data, 'orderId'), ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/settings/\${encodeURIComponent(data.orderId)}\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchSettingsGetByOrderIdAsync = <T extends {status:string;nextId:string;'orderId':string;}, R extends {data:number;result1:{data:string;result1:boolean;items2:{data:{data:boolean;};result1:boolean[];};};items2:{data:{data:{data:{data:(string|number[]|{data:number;})[][];};result1:{data:{data:{}[];};};};result1:number;items2:{data:((string|{data:number;})[][]|{data:string;})[];};};};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number;result1:{data:string;result1:boolean;items2:{data:{data:boolean;};result1:boolean[];};};items2:{data:{data:{data:{data:(string|number[]|{data:number;})[][];};result1:{data:{data:{}[];};};};result1:number;items2:{data:((string|{data:number;})[][]|{data:string;})[];};};};}>(\`/api/settings/\${encodeURIComponent(data.orderId)}\`, { method: \`get\`, query:omit(data, 'orderId'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /settings/orders/[slug]/[orderId]/tags.put.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchSettingsOrdersSlugOrderIdTagsUpdate = <T extends {createdAt:string;prevId:string;slug:string;orderId:string;}, R extends {data:{data:{data:boolean;result1:boolean;};result1:(string|{data:({data:(string|boolean)[][];result1:boolean;}|{data:(boolean|string[])[];result1?:undefined;})[];}|{data:string;}[])[];};result1:{data:{data:{data:{data:boolean;result1:number;items2:boolean[];};result1:{data:boolean;};};}[];};items2:string;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/settings/orders/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.orderId)}/tags\`, { method: 'put', body:omit(data, 'slug','orderId'), ...opt })
-export const useTFetchSettingsOrdersSlugOrderIdTagsUpdateAsync = <T extends {createdAt:string;prevId:string;slug:string;orderId:string;}, R extends {data:{data:{data:boolean;result1:boolean;};result1:(string|{data:({data:(string|boolean)[][];result1:boolean;}|{data:(boolean|string[])[];result1?:undefined;})[];}|{data:string;}[])[];};result1:{data:{data:{data:{data:boolean;result1:number;items2:boolean[];};result1:{data:boolean;};};}[];};items2:string;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:boolean;result1:boolean;};result1:(string|{data:({data:(string|boolean)[][];result1:boolean;}|{data:(boolean|string[])[];result1?:undefined;})[];}|{data:string;}[])[];};result1:{data:{data:{data:{data:boolean;result1:number;items2:boolean[];};result1:{data:boolean;};};}[];};items2:string;}>(\`/api/settings/orders/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.orderId)}/tags\`, { method: 'put', body:omit(data, 'slug','orderId'), ...opt })
+/**
+ * Generates a composable that sends a \`put\` request to \`/api/settings/orders/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.orderId)}/tags\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchSettingsOrdersSlugOrderIdTagsUpdate = <T extends {createdAt:string;prevId:string;slug:string;orderId:string;}, R extends {data:{data:{data:boolean;result1:boolean;};result1:(string|{data:({data:(string|boolean)[][];result1:boolean;}|{data:(boolean|string[])[];result1?:undefined;})[];}|{data:string;}[])[];};result1:{data:{data:{data:{data:boolean;result1:number;items2:boolean[];};result1:{data:boolean;};};}[];};items2:string;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/settings/orders/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.orderId)}/tags\`, { method: \`put\`, body:omit(data, 'slug','orderId'), ...opt })
+/**
+ * Generates a composable that sends a \`put\` request to \`/api/settings/orders/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.orderId)}/tags\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchSettingsOrdersSlugOrderIdTagsUpdateAsync = <T extends {createdAt:string;prevId:string;slug:string;orderId:string;}, R extends {data:{data:{data:boolean;result1:boolean;};result1:(string|{data:({data:(string|boolean)[][];result1:boolean;}|{data:(boolean|string[])[];result1?:undefined;})[];}|{data:string;}[])[];};result1:{data:{data:{data:{data:boolean;result1:number;items2:boolean[];};result1:{data:boolean;};};}[];};items2:string;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:{data:boolean;result1:boolean;};result1:(string|{data:({data:(string|boolean)[][];result1:boolean;}|{data:(boolean|string[])[];result1?:undefined;})[];}|{data:string;}[])[];};result1:{data:{data:{data:{data:boolean;result1:number;items2:boolean[];};result1:{data:boolean;};};}[];};items2:string;}>(\`/api/settings/orders/\${encodeURIComponent(data.slug)}/\${encodeURIComponent(data.orderId)}/tags\`, { method: \`put\`, body:omit(data, 'slug','orderId'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /tags/[uid].post.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchTagsCreateByUid = <T extends Omit<{price:number;innerId:string;email:string;status:string;count:number;outerId:string;title:string;},'count'>&{'uid':string;}&Partial<{prevId:string;itemId:string;}>, R extends {data:number;result1:{data:{data:(string|{data:(number|(string|(string|number|boolean)[])[])[];result1?:undefined;items2?:undefined;}|{data:({data:(string|boolean)[];}|(boolean|(string|number|boolean)[])[])[];result1:string;items2:number;})[];};result1:{data:boolean;result1:number;};items2:({data:{data:number;result1:{data:number;};};}|(number|(string|{data:boolean;result1:(number|boolean[])[];items2:{data:number;};})[])[])[];};items2:number;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/tags/\${encodeURIComponent(data.uid)}\`, { method: 'post', body:omit(data, 'uid'), ...opt })
-export const useTFetchTagsCreateByUidAsync = <T extends Omit<{price:number;innerId:string;email:string;status:string;count:number;outerId:string;title:string;},'count'>&{'uid':string;}&Partial<{prevId:string;itemId:string;}>, R extends {data:number;result1:{data:{data:(string|{data:(number|(string|(string|number|boolean)[])[])[];result1?:undefined;items2?:undefined;}|{data:({data:(string|boolean)[];}|(boolean|(string|number|boolean)[])[])[];result1:string;items2:number;})[];};result1:{data:boolean;result1:number;};items2:({data:{data:number;result1:{data:number;};};}|(number|(string|{data:boolean;result1:(number|boolean[])[];items2:{data:number;};})[])[])[];};items2:number;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number;result1:{data:{data:(string|{data:(number|(string|(string|number|boolean)[])[])[];result1?:undefined;items2?:undefined;}|{data:({data:(string|boolean)[];}|(boolean|(string|number|boolean)[])[])[];result1:string;items2:number;})[];};result1:{data:boolean;result1:number;};items2:({data:{data:number;result1:{data:number;};};}|(number|(string|{data:boolean;result1:(number|boolean[])[];items2:{data:number;};})[])[])[];};items2:number;}>(\`/api/tags/\${encodeURIComponent(data.uid)}\`, { method: 'post', body:omit(data, 'uid'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/tags/\${encodeURIComponent(data.uid)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchTagsCreateByUid = <T extends Omit<{price:number;innerId:string;email:string;status:string;count:number;outerId:string;title:string;},'count'>&{'uid':string;}&Partial<{prevId:string;itemId:string;}>, R extends {data:number;result1:{data:{data:(string|{data:(number|(string|(string|number|boolean)[])[])[];result1?:undefined;items2?:undefined;}|{data:({data:(string|boolean)[];}|(boolean|(string|number|boolean)[])[])[];result1:string;items2:number;})[];};result1:{data:boolean;result1:number;};items2:({data:{data:number;result1:{data:number;};};}|(number|(string|{data:boolean;result1:(number|boolean[])[];items2:{data:number;};})[])[])[];};items2:number;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/tags/\${encodeURIComponent(data.uid)}\`, { method: \`post\`, body:omit(data, 'uid'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/tags/\${encodeURIComponent(data.uid)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchTagsCreateByUidAsync = <T extends Omit<{price:number;innerId:string;email:string;status:string;count:number;outerId:string;title:string;},'count'>&{'uid':string;}&Partial<{prevId:string;itemId:string;}>, R extends {data:number;result1:{data:{data:(string|{data:(number|(string|(string|number|boolean)[])[])[];result1?:undefined;items2?:undefined;}|{data:({data:(string|boolean)[];}|(boolean|(string|number|boolean)[])[])[];result1:string;items2:number;})[];};result1:{data:boolean;result1:number;};items2:({data:{data:number;result1:{data:number;};};}|(number|(string|{data:boolean;result1:(number|boolean[])[];items2:{data:number;};})[])[])[];};items2:number;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:number;result1:{data:{data:(string|{data:(number|(string|(string|number|boolean)[])[])[];result1?:undefined;items2?:undefined;}|{data:({data:(string|boolean)[];}|(boolean|(string|number|boolean)[])[])[];result1:string;items2:number;})[];};result1:{data:boolean;result1:number;};items2:({data:{data:number;result1:{data:number;};};}|(number|(string|{data:boolean;result1:(number|boolean[])[];items2:{data:number;};})[])[])[];};items2:number;}>(\`/api/tags/\${encodeURIComponent(data.uid)}\`, { method: \`post\`, body:omit(data, 'uid'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /tags/[uid]/[postId]/[variantId]/orders.delete.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchTagsUidPostIdVariantIdOrdersRemove = <T extends {'uid':string;'postId':string;'variantId':string;}&{isActive:boolean;nextId:string;}&{age:number;itemId:string;}, R extends {data:(string|{data:{data:{data:boolean;result1:{data:{data:(string|number)[];};result1:{data:(string|boolean)[];};items2:boolean[];};};};result1:number;})[];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/tags/\${encodeURIComponent(data.uid)}/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.variantId)}/orders\`, { method: 'delete', query:omit(data, 'uid','postId','variantId'), ...opt })
-export const useTFetchTagsUidPostIdVariantIdOrdersRemoveAsync = <T extends {'uid':string;'postId':string;'variantId':string;}&{isActive:boolean;nextId:string;}&{age:number;itemId:string;}, R extends {data:(string|{data:{data:{data:boolean;result1:{data:{data:(string|number)[];};result1:{data:(string|boolean)[];};items2:boolean[];};};};result1:number;})[];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:(string|{data:{data:{data:boolean;result1:{data:{data:(string|number)[];};result1:{data:(string|boolean)[];};items2:boolean[];};};};result1:number;})[];}>(\`/api/tags/\${encodeURIComponent(data.uid)}/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.variantId)}/orders\`, { method: 'delete', query:omit(data, 'uid','postId','variantId'), ...opt })
+/**
+ * Generates a composable that sends a \`delete\` request to \`/api/tags/\${encodeURIComponent(data.uid)}/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.variantId)}/orders\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchTagsUidPostIdVariantIdOrdersRemove = <T extends {'uid':string;'postId':string;'variantId':string;}&{isActive:boolean;nextId:string;}&{age:number;itemId:string;}, R extends {data:(string|{data:{data:{data:boolean;result1:{data:{data:(string|number)[];};result1:{data:(string|boolean)[];};items2:boolean[];};};};result1:number;})[];}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/tags/\${encodeURIComponent(data.uid)}/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.variantId)}/orders\`, { method: \`delete\`, query:omit(data, 'uid','postId','variantId'), ...opt })
+/**
+ * Generates a composable that sends a \`delete\` request to \`/api/tags/\${encodeURIComponent(data.uid)}/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.variantId)}/orders\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchTagsUidPostIdVariantIdOrdersRemoveAsync = <T extends {'uid':string;'postId':string;'variantId':string;}&{isActive:boolean;nextId:string;}&{age:number;itemId:string;}, R extends {data:(string|{data:{data:{data:boolean;result1:{data:{data:(string|number)[];};result1:{data:(string|boolean)[];};items2:boolean[];};};};result1:number;})[];}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:(string|{data:{data:{data:boolean;result1:{data:{data:(string|number)[];};result1:{data:(string|boolean)[];};items2:boolean[];};};};result1:number;})[];}>(\`/api/tags/\${encodeURIComponent(data.uid)}/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.variantId)}/orders\`, { method: \`delete\`, query:omit(data, 'uid','postId','variantId'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /tags/products/[id]/[uid].post.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchTagsProductsIdCreateByUid = <T extends {isActive:boolean;email:string;'id':string;'uid':string;}, R extends {data:string[];result1:{data:number;result1:string;};type:any;pid:any;slug:any;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/tags/products/\${encodeURIComponent(data.id)}/\${encodeURIComponent(data.uid)}\`, { method: 'post', body:omit(data, 'id','uid'), ...opt })
-export const useTFetchTagsProductsIdCreateByUidAsync = <T extends {isActive:boolean;email:string;'id':string;'uid':string;}, R extends {data:string[];result1:{data:number;result1:string;};type:any;pid:any;slug:any;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:string[];result1:{data:number;result1:string;};type:any;pid:any;slug:any;}>(\`/api/tags/products/\${encodeURIComponent(data.id)}/\${encodeURIComponent(data.uid)}\`, { method: 'post', body:omit(data, 'id','uid'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/tags/products/\${encodeURIComponent(data.id)}/\${encodeURIComponent(data.uid)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchTagsProductsIdCreateByUid = <T extends {isActive:boolean;email:string;'id':string;'uid':string;}, R extends {data:string[];result1:{data:number;result1:string;};type:any;pid:any;slug:any;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/tags/products/\${encodeURIComponent(data.id)}/\${encodeURIComponent(data.uid)}\`, { method: \`post\`, body:omit(data, 'id','uid'), ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/tags/products/\${encodeURIComponent(data.id)}/\${encodeURIComponent(data.uid)}\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchTagsProductsIdCreateByUidAsync = <T extends {isActive:boolean;email:string;'id':string;'uid':string;}, R extends {data:string[];result1:{data:number;result1:string;};type:any;pid:any;slug:any;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:string[];result1:{data:number;result1:string;};type:any;pid:any;slug:any;}>(\`/api/tags/products/\${encodeURIComponent(data.id)}/\${encodeURIComponent(data.uid)}\`, { method: \`post\`, body:omit(data, 'id','uid'), ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /users/posts.post.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchUsersPostsCreate = <T extends Omit<{status:string;createdAt:string;email:string;age:number;nextId:string;isActive:boolean;},'nextId'>&Partial<{createdAt:string;count:number;outerId:string;}>, R extends {data:boolean;categoryId:any;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/users/posts\`, { method: 'post', body:data, ...opt })
-export const useTFetchUsersPostsCreateAsync = <T extends Omit<{status:string;createdAt:string;email:string;age:number;nextId:string;isActive:boolean;},'nextId'>&Partial<{createdAt:string;count:number;outerId:string;}>, R extends {data:boolean;categoryId:any;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:boolean;categoryId:any;}>(\`/api/users/posts\`, { method: 'post', body:data, ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/users/posts\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchUsersPostsCreate = <T extends Omit<{status:string;createdAt:string;email:string;age:number;nextId:string;isActive:boolean;},'nextId'>&Partial<{createdAt:string;count:number;outerId:string;}>, R extends {data:boolean;categoryId:any;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/users/posts\`, { method: \`post\`, body:data, ...opt })
+/**
+ * Generates a composable that sends a \`post\` request to \`/api/users/posts\` endpoint with the given data as \`body\`.
+ * @param data - Data to send as body.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ 
+ */
+export const useTFetchUsersPostsCreateAsync = <T extends Omit<{status:string;createdAt:string;email:string;age:number;nextId:string;isActive:boolean;},'nextId'>&Partial<{createdAt:string;count:number;outerId:string;}>, R extends {data:boolean;categoryId:any;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:boolean;categoryId:any;}>(\`/api/users/posts\`, { method: \`post\`, body:data, ...opt })
+
+
 "
 `;
 
 exports[`Test type extraction and composable code generation > generates a composable for endpoint: /validation.get.ts 1`] = `
 "import {useFetch,type UseFetchOptions} from 'nuxt/app'
-export const useTFetchValidationGet = <T extends unknown, R extends {data:string;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/validation\`, { method: 'get', query:data, ...opt })
-export const useTFetchValidationGetAsync = <T extends unknown, R extends {data:string;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:string;}>(\`/api/validation\`, { method: 'get', query:data, ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/validation\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ * @alias \`getValidationEndpoint\`.
+ */
+export const useTFetchValidationGet = <T extends {a:string,b:number,d:string,t:boolean}, R extends {data:string;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/validation\`, { method: \`get\`, query:data, ...opt })
+/**
+ * Generates a composable that sends a \`get\` request to \`/api/validation\` endpoint with the given data as \`query\`.
+ * @param data - Data to send as query.
+ * @param opt - Options to pass to the underlying \`useFetch\`.
+ * @alias \`getValidationEndpoint\`.
+ */
+export const useTFetchValidationGetAsync = <T extends {a:string,b:number,d:string,t:boolean}, R extends {data:string;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:string;}>(\`/api/validation\`, { method: \`get\`, query:data, ...opt })
+
+export const getValidationEndpoint = useTFetchValidationGet
+export const getValidationEndpointAsync = useTFetchValidationGetAsync
 "
 `;
