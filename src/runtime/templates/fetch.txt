@@ -1,3 +1,17 @@
 import {useFetch,type UseFetchOptions} from 'nuxt/app'
+/**
+ * Generates a composable that sends a :method request to :url endpoint :inputKind.
+ * @param data - Data to send as :propForData.
+ * @param opt - Options to pass to the underlying `useFetch`.
+ :alias
+ */
 export const :apiNamePrefix:apiFnName = <T extends :inputType, R extends :responseType>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(:url, { method: :method, :inputData, ...opt })
+/**
+ * Generates a composable that sends a :method request to :url endpoint :inputKind.
+ * @param data - Data to send as :propForData.
+ * @param opt - Options to pass to the underlying `useFetch`.
+ :alias
+ */
 export const :apiNamePrefix:apiFnNameAsync = <T extends :inputType, R extends :responseType>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<:responseType>(:url, { method: :method, :inputData, ...opt })
+
+:aFunctions
