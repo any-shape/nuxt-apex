@@ -9,10 +9,24 @@
       />
 
       <apex-fetcher
+        composable-name="getComments"
+        :status="r1Alsias.status"
+        :response="cr(r1Alsias.data.value, testData.r1.response)"
+        :error="r1Alsias.error.value?.message"
+      />
+
+      <apex-fetcher
         composable-name="useTFetchMessagesProfilesPostIdOrderIdCreateByPostId"
         :status="r2.status"
         :response="cr(r2.data.value, testData.r2.response)"
         :error="r2.error.value?.message"
+      />
+
+      <apex-fetcher
+        composable-name="getPosts"
+        :status="r2Alsias.status"
+        :response="cr(r2Alsias.data.value, testData.r2.response)"
+        :error="r2Alsias.error.value?.message"
       />
 
       <apex-fetcher
@@ -75,11 +89,27 @@
       />
 
       <apex-fetcher
+        composable-name="getCommentsAsync"
+        :status="r1AsyncDataAlisas.status"
+        :response="cr(r1AsyncDataAlisas.data, testData.r1.response)"
+        :error="r1AsyncDataAlisas.error?.message"
+        :fetcher="r1AliasAsync"
+      />
+
+      <apex-fetcher
         composable-name="useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync"
         :status="r2AsyncData.status"
         :response="cr(r2AsyncData.data, testData.r2.response)"
         :error="r2AsyncData.error?.message"
         :fetcher="r2Async"
+      />
+
+      <apex-fetcher
+        composable-name="getPostsAsync"
+        :status="r2AsyncDataAlisas.status"
+        :response="cr(r2AsyncDataAlisas.data, testData.r2.response)"
+        :error="r2AsyncDataAlisas.error?.message"
+        :fetcher="r2AliasAsync"
       />
 
       <apex-fetcher
@@ -236,7 +266,7 @@
     r9Valid: {
       payload: {
         a: 'info',
-        b: '15',
+        b: 15,
         d: 'test',
         t: true
       },
@@ -244,8 +274,8 @@
     },
     r9Invalid: {
       payload: {
-        a: 10,
-        b: 'test',
+        a: '10',
+        b: 10,
         d: 'test',
         t: new Date()
       },
@@ -262,6 +292,8 @@
   const r7 = useTFetchPidNameTagsRemove(testData.r7.payload)
   const r8 = useTFetchUsersPostsCreate(testData.r8.payload)
   const r9Valid = useTFetchValidationGet(testData.r9Valid.payload)
+  const r1Alsias = getComments(testData.r1.payload)
+  const r2Alsias = getPosts(testData.r2.payload)
 
   const r1AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
   const r2AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
@@ -272,6 +304,8 @@
   const r7AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
   const r8AsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
   const r9ValidAsyncData = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r1AsyncDataAlisas = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
+  const r2AsyncDataAlisas = reactive<ManualFetchResult>({ status: 'idle', data: null, error: null })
 
   const r1Async = async () => await manualFetchWraper(useTFetchCommentsIdProductsGetByUidAsync(testData.r1.payload), r1AsyncData)
   const r2Async = async () => await manualFetchWraper(useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync(testData.r2.payload), r2AsyncData)
@@ -282,6 +316,8 @@
   const r7Async = async () => await manualFetchWraper(useTFetchPidNameTagsRemoveAsync(testData.r7.payload), r7AsyncData)
   const r8Async = async () => await manualFetchWraper(useTFetchUsersPostsCreateAsync(testData.r8.payload), r8AsyncData)
   const r9ValidAsync = async () => await manualFetchWraper(useTFetchValidationGetAsync(testData.r9Valid.payload), r9ValidAsyncData)
+  const r1AliasAsync = async () => await manualFetchWraper(getCommentsAsync(testData.r1.payload), r1AsyncDataAlisas)
+  const r2AliasAsync = async () => await manualFetchWraper(getPostsAsync(testData.r2.payload), r2AsyncDataAlisas)
 
   const cr = (r1: any, r2: any) => JSON.stringify(r1) == JSON.stringify(r2)
 
