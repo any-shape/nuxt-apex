@@ -26,10 +26,15 @@ const { data } = await useFetch('/api/orders', {
 **With nuxt-apex, every endpoint becomes a typed composable:**
 
 ```ts
-// All auto-generated, fully typed, with autocomplete ✅
-const users = await useTFetchUsersPostAsync({ name: 'John', email: 'john@example.com' })
+// All auto-generated, fully typed, aliase supported, with autocomplete ✅
 const post = useTFetchPostsGetById({ id: postId })
+const users = await useTFetchUsersPostAsync({ name: 'John', email: 'john@example.com' })
 const order = await useTFetchOrdersPutAsync(orderData)
+
+// or can be aliased like
+const post = getPost({ id: postId })
+const users = await addUsers({ name: 'John', email: 'john@example.com' })
+const order = await updateOrder(orderData)
 ```
 
 **Works with any API complexity** — Simple CRUD, complex business logic, authentication, middleware, error handling. If you can define it with `defineApexHandler`, you get a typed composable.
