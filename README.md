@@ -31,7 +31,7 @@ const post = useTFetchPostsGetById({ id: postId })
 const users = await useTFetchUsersPostAsync({ name: 'John', email: 'john@example.com' })
 const order = await useTFetchOrdersPutAsync(orderData)
 
-// or can be aliased like
+// or can be aliased like (see Configuration section for more info)
 const post = getPost({ id: postId })
 const users = await addUsers({ name: 'John', email: 'john@example.com' })
 const order = await updateOrder(orderData)
