@@ -99,12 +99,12 @@ All commits must follow the **[Conventional Commits](https://www.conventionalcom
 
   - Unit tests (`Vitest`):
     ```shell
-    pnpm test
+    pnpm test:unit
     ```
 
   - E2E tests (`Cypress`):
     ```shell
-    pnpm cy:open
+    pnpm test:e2e
     ```
 
 ***Make sure all tests pass before opening a PR.***

@@ -26,10 +26,15 @@ const { data } = await useFetch('/api/orders', {
 **With nuxt-apex, every endpoint becomes a typed composable:**
 
 ```ts
-// All auto-generated, fully typed, with autocomplete ✅
-const users = await useTFetchUsersPostAsync({ name: 'John', email: 'john@example.com' })
+// All auto-generated, fully typed, aliase supported, with autocomplete ✅
 const post = useTFetchPostsGetById({ id: postId })
+const users = await useTFetchUsersPostAsync({ name: 'John', email: 'john@example.com' })
 const order = await useTFetchOrdersPutAsync(orderData)
+
+// or can be aliased like (see Configuration section for more info)
+const post = getPost({ id: postId })
+const users = await addUsers({ name: 'John', email: 'john@example.com' })
+const order = await updateOrder(orderData)
 ```
 
 **Works with any API complexity** — Simple CRUD, complex business logic, authentication, middleware, error handling. If you can define it with `defineApexHandler`, you get a typed composable.
@@ -117,13 +122,55 @@ export default defineApexHandler<Input>(async (data, event) => {
 export default defineNuxtConfig({
   modules: ['nuxt-apex'],
   apex: {
-    sourcePath: 'api',                    // API source folder
-    outputPath: 'composables/.nuxt-apex', // Output for composables
-    composableName: 'useTFetch',          // Composable prefix
-    ignore: ['api/internal/**'],          // Patterns to ignore
+    sourcePath: 'api',                              // API source folder
+    outputPath: 'composables/.nuxt-apex',           // Output for composables
+    cacheFolder: 'node_modules/.cache/nuxt-apex',   // Output for cache
+    composablePrefix: 'useTFetch',                  // Composable prefix
+    namingFunction: undefined,                      // Custom naming function
+    listenFileDependenciesChanges: true,            // Watch for file changes
+    serverEventHandlerName: 'defineApexHandler',    // Server event handler name
+    tsConfigFilePath: undefined,                    // Path to tsconfig.json
+    ignore: ['api/internal/**'],                    // Patterns to ignore
+    concurrency: 50,                                // Concurrency limit
+    tsMorphOptions: { /* ... */ },                  // ts-morph options
   }
 })
 ```
+
+**Custom Naming Function:** If you need more control over composable names, provide a custom naming function & composablePrefix:
+```ts
+apex: {
+  composablePrefix: 'useApi',
+  namingFunction: (path: string) => {
+    const method = ...
+    return `${path.split('/').map(capitalize).join('')}${capitalize(method)}`
+    // Result: useApiPostsIdGet instead of useTFetchPostsGetById
+  }
+}
+```
+
+**Aliases:** If you need to alias a composable, provide it on top of the `defineApexHandler`:
+```ts
+interface Input {
+  id: number
+}
+
+// as: getPosts      <--- like this
+/* as: getPosts */   <--- or like this
+/**                  <--- or like this
+* @alias getPosts
+*/
+export default defineApexHandler<Input>(async (data, event) => {
+  return { id: data.id, title: 'Amazing title' }
+})
+```
+
+Now in the client call `getPosts` instead of `useTFetchPostsGetById`:
+```ts
+const { data, error, pending } = getPosts({ id: 42 })
+```
+
+***You can still use the original `useTFetchPostsGetById` if you need to.***
 
 ### Two Flavors of Composables
 

@@ -1,7 +1,7 @@
 import { defineNuxtModule, addImportsDir, createResolver, addServerImportsDir } from '@nuxt/kit'
-import { dirname, join, posix, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
-import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts } from 'ts-morph'
+import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts, SourceFile } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
@@ -15,7 +15,9 @@ export interface ApexModuleOptions {
   /** Output path (default: 'node_modules/.nuxt-apex/composables') */
   outputPath: string,
   /** Composable name prefix (default: 'useTFetch') */
-  composableName: string,
+  composablePrefix: string,
+  /**Custom naming function for composable names (without prefix) */
+  namingFucntion: (path: string) => string,
   /** @see https://ts-morph.com/setup/ */
   tsMorphOptions: ProjectOptions,
   /**When true, the module will listen for changes in the source files and re-generate the composables (default: true) */
@@ -43,14 +45,16 @@ type EndpointTypeStructure = {
   inputType: string,
   inputFilePath: string,
   responseType: string,
-  responseFilePath: string
+  responseFilePath: string,
+  alias?: string
 }
 
 export const DEFAULTS = {
   sourcePath: 'api',
   outputPath: 'composables/.nuxt-apex',
   cacheFolder: 'node_modules/.cache/nuxt-apex',
-  composableName: 'useTFetch',
+  composablePrefix: 'useTFetch',
+  namingFucntion: undefined,
   listenFileDependenciesChanges: true,
   serverEventHandlerName: 'defineApexHandler',
   tsConfigFilePath: undefined,
@@ -111,16 +115,16 @@ export default defineNuxtModule<ApexModuleOptions>({
     await storage.init({ dir: resolve(nuxt.options.rootDir, `${options.cacheFolder}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
     const limit = pLimit(options.concurrency || 50)
 
-    const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) =>  {
+    const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) => {
       try {
         const id = (_fileGenIds.get(e) || 0) + 1
         _fileGenIds.set(e, id)
 
         const et = await extractTypesFromEndpoint(e, tsProject, options.serverEventHandlerName, isUpdate)
         const es = getEndpointStructure(e, sourcePath, options.sourcePath)
-        const code = constructComposableCode(composableTemplate, et, es, options.composableName)
+        const code = constructComposableCode(composableTemplate, et, es, options.composablePrefix)
 
-        const fileName = options.composableName + es.name
+        const fileName = options.composablePrefix + es.name
         const path = resolve(outputFolder, `${fileName}.ts`).replace(/\\/g, '/')
 
         if(_fileGenIds.get(e) !== id) return
@@ -239,10 +243,21 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
     throw new Error(`No ${handlerName} found in ${endpoint}`)
   }
 
-  function getAliasText(sym: Symbol) {
+  function extractAliasFromComments(sf: SourceFile): string | undefined {
+    const ALIAS_RX = /^\s*(?:(?:\/\/)|(?:\/\*+)|\*)\s*(?:as|@alias)\s*:?[\s]*([A-Za-z_$][\w$]*)/im
+
+    const fullText = sf.getFullText()
+    const aliasMatch = ALIAS_RX.exec(fullText)
+
+    return aliasMatch ? aliasMatch[1] : undefined
+  }
+
+  function getAliasText(sym?: Symbol) {
+    if(!sym) return undefined
+
     sym = sym.getAliasedSymbol?.() ?? sym
     const decl = sym?.getDeclarations().find(d => Node.isTypeAliasDeclaration(d) || Node.isInterfaceDeclaration(d)) as TypeAliasDeclaration | InterfaceDeclaration | undefined
-    if(!decl) return 'unknown'
+    if(!decl) return undefined
 
     const typeNode = Node.isTypeAliasDeclaration(decl) ? decl.getTypeNode() : decl
     const text = typeNode ? typeNode?.getText({ trimLeadingIndentation: true }).replace(/\s+/gm, '') : sym.getName()
@@ -307,11 +322,13 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
     return filePath
   }
 
+  result.alias = extractAliasFromComments(sf)
+
   //extract payload type and filepath
   const [payloadArg] = handlerCall.getTypeArguments()
   const payloadAlias = payloadArg?.getType().getAliasSymbol() ?? payloadArg?.getType().getSymbol()
 
-  result.inputType = payloadAlias ? getAliasText(payloadAlias) : payloadArg?.getText().replace(/\s+/gm, '') || 'unknown'
+  result.inputType = (getAliasText(payloadAlias) || payloadArg?.getText().replace(/\s+/gm, '')) || 'unknown'
   result.inputFilePath = payloadAlias ? getAliasFile(payloadAlias) : sf.getFilePath()
 
   //extract response type and filepath
@@ -339,31 +356,30 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
     }
   }
 
+  if(result.inputType === 'unknown' || result.responseType === 'unknown') {
+    const arr = []
+    if(result.inputType === 'unknown') arr.push('input')
+    if(result.responseType === 'unknown') arr.push('response')
+
+    throw new Error(`Unable to determine: ${arr.join(' and ')} type${arr.length > 1 ? 's' : ''}`)
+  }
+
   result.responseFilePath = firstCall? getCallDeclFile(firstCall) : sf.getFilePath()
   return result
 }
 
-export function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: string): EndpointStructure {
-  const relPath = posix.relative(sourcePath.replace(/\\/g, '/'), endpoint.replace(/\\/g, '/')).replace(EXT_RX, '')
+export function getEndpointStructure(endpoint: string, sourcePath: string, baseUrl: string, namingFucntion?: (path: string) => string): EndpointStructure {
+  const relPath = relative(sourcePath.replace(/\\/g, '/'), endpoint.replace(/\\/g, '/')).replace(EXT_RX, '').replace(/\\/g, '/')
   const segments = relPath.split('/')
 
   const last = segments.pop()!
   const [rawName, methodKey] = last.split('.') as [string, keyof typeof METHOD_MAP]
   const action = METHOD_MAP[methodKey]
-
   const folderPart = segments.map(p => pascalCase(p)).join('')
-  let baseName: string
 
-  if (SLUG_RX.test(rawName)) {
-    const slug = rawName.slice(1, -1)
-    baseName = action + 'By' + pascalCase(slug)
-  } else if (rawName === 'index') {
-    baseName = action
-  } else {
-    baseName = pascalCase(rawName) + pascalCase(action)
-  }
+  const name = namingFucntion?.(relPath) ?? baseNamingFunction(action, rawName, folderPart)
+  if(typeof name !== 'string' || name.length === 0) throw new Error('namingFucntion must return a valid stiring')
 
-  const name = folderPart ? folderPart + pascalCase(baseName) : pascalCase(baseName)
   const slugs: string[] = []
 
   const url = ['', baseUrl, ...segments, rawName].map(segment => {
@@ -382,22 +398,47 @@ export function getEndpointStructure(endpoint: string, sourcePath: string, baseU
   return { url, slugs, method: methodKey, name }
 }
 
-export function constructComposableCode(template: string, et: EndpointTypeStructure, es: EndpointStructure, composableName: string) {
+export function constructComposableCode(template: string, et: EndpointTypeStructure, es: EndpointStructure, composablePrefix: string) {
+  const propForData = ['get', 'delete'].includes(es.method) ? 'query' : 'body'
+
   const dataText = es.slugs.length
    ? `:omit(data, ${es.slugs.map(x => `'${x}'`).join(',')})`
    : ':data'
 
+  const inputKind = `with the given data as \`${propForData}\``
+  const alias = et.alias ? `* @alias \`${et.alias}\`.` : ''
+  const aliaseFunctions = et.alias
+    ? ['', 'Async'].map(x => `export const ${et.alias}${x} = ${composablePrefix}${es.name}${x}`).join('\n')
+    : ''
+
   return template
     .replace(/:inputType/g, et.inputType)
     .replace(/:responseType/g, et.responseType)
-    .replace(/:url/g, `\`${es.url}\``)
-    .replace(/:method/g, `'${es.method}'`)
-    .replace(/:apiNamePrefix/g, composableName)
+    .replaceAll(/:url/g, `\`${es.url}\``)
+    .replace(/:method/g, `\`${es.method}\``)
+    .replace(/:apiNamePrefix/g, composablePrefix)
     .replace(/:apiFnName/g, es.name)
-    .replace(
-      /:inputData/g,
-      (['get', 'delete'].includes(es.method) ? 'query' : 'body') + dataText
-    )
+    .replace(/:inputData/g, propForData + dataText)
+
+    .replace(/:inputKind/g, inputKind)
+    .replace(/:propForData/g, propForData)
+    .replace(/:alias/g, alias)
+    .replace(/:aFunctions/g, aliaseFunctions)
+}
+
+function baseNamingFunction(action: string, rawName: string, folderPart?: string) {
+  let baseName: string
+
+  if (SLUG_RX.test(rawName)) {
+    const slug = rawName.slice(1, -1)
+    baseName = action + 'By' + pascalCase(slug)
+  } else if (rawName === 'index') {
+    baseName = action
+  } else {
+    baseName = pascalCase(rawName) + pascalCase(action)
+  }
+
+  return folderPart ? folderPart + pascalCase(baseName) : pascalCase(baseName)
 }
 
 async function createFile(path: string, content: string) {

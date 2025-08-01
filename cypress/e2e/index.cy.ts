@@ -4,7 +4,7 @@ describe('api composables called in auto and manually', () => {
   })
 
   it('testing composables in auto mode', () => {
-    cy.get('#apex-auto .apex-fetcher').should('have.length', 9)
+    cy.get('#apex-auto .apex-fetcher').should('have.length', 11)
     cy.get('#apex-auto .apex-fetcher').each(($el) => {
       cy.wrap($el).find('.apex-fetcher-error').should('not.exist')
       cy.wrap($el).find('.apex-fetcher-status').should('have.text', 'Status: success;')
@@ -15,7 +15,7 @@ describe('api composables called in auto and manually', () => {
   it('testing composables in manual mode', () => {
     cy.intercept('**/api/**').as('manualFetch')
 
-    cy.get('#apex-manual .apex-fetcher').should('have.length', 9).each(($el) => {
+    cy.get('#apex-manual .apex-fetcher').should('have.length', 11).each(($el) => {
       cy.waitForHydration()
 
       return cy.wrap($el).within(() => {

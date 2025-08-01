@@ -32,9 +32,9 @@ describe('Test type extraction and composable code generation', () => {
     it(`generates a composable for endpoint: ${endpoint.split(apiDir)[1]}`, async () => {
       const et = await extractTypesFromEndpoint(endpoint, tsProject, DEFAULTS.serverEventHandlerName, false)
       const es = getEndpointStructure(endpoint, apiDir, DEFAULTS.sourcePath)
-      const code = constructComposableCode(await readFile(templateFile, 'utf-8'), et, es, DEFAULTS.composableName)
+      const code = constructComposableCode(await readFile(templateFile, 'utf-8'), et, es, DEFAULTS.composablePrefix)
 
-      const path = resolve(outputDir, './composables', `${DEFAULTS.composableName + es.name}.ts`).replace(/\\/g, '/')
+      const path = resolve(outputDir, './composables', `${DEFAULTS.composablePrefix + es.name}.ts`).replace(/\\/g, '/')
       vol.fromJSON({ [path]: code })
 
       expect(code).toMatchSnapshot()
