@@ -144,6 +144,29 @@ apex: {
 }
 ```
 
+**Aliases:** If you need to alias a composable, provide it on top of the `defineApexHandler`:
+```ts
+interface Input {
+  id: number
+}
+
+// as: getPosts      <--- like this
+/* as: getPosts */   <--- or like this
+/**                  <--- or like this
+* @alias getPosts
+*/
+export default defineApexHandler<Input>(async (data, event) => {
+  return { id: data.id, title: 'Amazing title' }
+})
+```
+
+Now in the client call `getPosts` instead of `useTFetchPostsGetById`:
+```ts
+const { data, error, pending } = getPosts({ id: 42 })
+```
+
+***You can still use the original `useTFetchPostsGetById` if you need to.***
+
 ### Two Flavors of Composables
 
 nuxt-apex generates **two versions** of each composable:
