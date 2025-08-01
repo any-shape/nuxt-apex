@@ -258,18 +258,19 @@ exports[`Test type extraction and composable code generation > generates a compo
  * Generates a composable that sends a \`get\` request to \`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\` endpoint with the given data as \`query\`.
  * @param data - Data to send as query.
  * @param opt - Options to pass to the underlying \`useFetch\`.
- 
+ * @alias \`getComments\`.
  */
 export const useTFetchCommentsIdProductsGetByUid = <T extends {email:string;updatedAt:string;'id':string;'uid':string;}, R extends {data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\`, { method: \`get\`, query:omit(data, 'id','uid'), ...opt })
 /**
  * Generates a composable that sends a \`get\` request to \`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\` endpoint with the given data as \`query\`.
  * @param data - Data to send as query.
  * @param opt - Options to pass to the underlying \`useFetch\`.
- 
+ * @alias \`getComments\`.
  */
 export const useTFetchCommentsIdProductsGetByUidAsync = <T extends {email:string;updatedAt:string;'id':string;'uid':string;}, R extends {data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:(string|number|(number|boolean[]|{data:{data:{data:boolean;result1:number;};result1:{data:string;};items2:{data:{data:boolean;};result1:(number|boolean)[];};};result1:string;items2:(string|{data:string;result1:(string|number|boolean)[];})[];}[])[])[];result1:number;}>(\`/api/comments/\${encodeURIComponent(data.id)}/products/\${encodeURIComponent(data.uid)}\`, { method: \`get\`, query:omit(data, 'id','uid'), ...opt })
 
-
+export const getComments = useTFetchCommentsIdProductsGetByUid
+export const getCommentsAsync = useTFetchCommentsIdProductsGetByUidAsync
 "
 `;
 
@@ -300,18 +301,19 @@ exports[`Test type extraction and composable code generation > generates a compo
  * Generates a composable that sends a \`post\` request to \`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\` endpoint with the given data as \`body\`.
  * @param data - Data to send as body.
  * @param opt - Options to pass to the underlying \`useFetch\`.
- 
+ * @alias \`getPosts\`.
  */
 export const useTFetchMessagesProfilesPostIdOrderIdCreateByPostId = <T extends {postId:string;orderId:string;}&{status:string;innerId:string;}&{prevId:string;}, R extends {data:{data:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => useFetch<R>(\`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\`, { method: \`post\`, body:omit(data, 'postId','orderId','postId'), ...opt })
 /**
  * Generates a composable that sends a \`post\` request to \`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\` endpoint with the given data as \`body\`.
  * @param data - Data to send as body.
  * @param opt - Options to pass to the underlying \`useFetch\`.
- 
+ * @alias \`getPosts\`.
  */
 export const useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync = <T extends {postId:string;orderId:string;}&{status:string;innerId:string;}&{prevId:string;}, R extends {data:{data:boolean;};}>(data: T, opt: UseFetchOptions<R> = {}) => $fetch<{data:{data:boolean;};}>(\`/api/messages/profiles/\${encodeURIComponent(data.postId)}/\${encodeURIComponent(data.orderId)}/\${encodeURIComponent(data.postId)}\`, { method: \`post\`, body:omit(data, 'postId','orderId','postId'), ...opt })
 
-
+export const getPosts = useTFetchMessagesProfilesPostIdOrderIdCreateByPostId
+export const getPostsAsync = useTFetchMessagesProfilesPostIdOrderIdCreateByPostIdAsync
 "
 `;
 

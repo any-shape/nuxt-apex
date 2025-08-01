@@ -99,7 +99,7 @@ All commits must follow the **[Conventional Commits](https://www.conventionalcom
 
   - Unit tests (`Vitest`):
     ```shell
-    pnpm test:module
+    pnpm test:unit
     ```
 
   - E2E tests (`Cypress`):

@@ -62,7 +62,7 @@
     "dev:build": "nuxi build playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare",
     "mockgen": "node --experimental-strip-types src/mockgen.ts",
-    "test:module": "vitest run",
+    "test:unit": "vitest run",
     "test:e2e": "cypress run",
     "cy:open": "cypress open"
   },
