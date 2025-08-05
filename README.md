@@ -1,5 +1,10 @@
 # nuxt-apex
 
+[![ci](https://github.com/any-shape/nuxt-apex/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/any-shape/nuxt-apex/actions/workflows/ci.yml)
+![size](https://img.shields.io/npm/unpacked-size/nuxt-apex)
+![GitHub package.json dev/peer/optional dependency version (branch)](https://img.shields.io/github/package-json/dependency-version/any-shape/nuxt-apex/dev/nuxt/main)
+![GitHub License](https://img.shields.io/github/license/any-shape/nuxt-apex)
+
 An advanced Nuxt 3/4 module that automatically generates fully-typed API composables for all your server endpoints.
 
 ## Motivation
