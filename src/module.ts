@@ -419,6 +419,7 @@ export function constructComposableCode(template: string, et: EndpointTypeStruct
   return template
     .replace(/:inputType/g, et.inputType)
     .replace(/:responseType/g, et.responseType)
+    .replaceAll(/:fallback/g, et.inputType === 'Record<string, any>' ? ' = {} as T' : '')
     .replaceAll(/:url/g, `\`${es.url}\``)
     .replace(/:method/g, `\`${es.method}\``)
     .replace(/:apiNamePrefix/g, composablePrefix)
