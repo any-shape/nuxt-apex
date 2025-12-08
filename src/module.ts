@@ -17,7 +17,7 @@ export interface ApexModuleOptions {
   /** Composable name prefix (default: 'useTFetch') */
   composablePrefix: string,
   /**Custom naming function for composable names (without prefix) */
-  namingFucntion: (path: string) => string,
+  namingFucntion?: (path: string) => string,
   /** @see https://ts-morph.com/setup/ */
   tsMorphOptions: ProjectOptions,
   /**When true, the module will listen for changes in the source files and re-generate the composables (default: true) */
@@ -95,7 +95,7 @@ export default defineNuxtModule<ApexModuleOptions>({
     const { resolve } = createResolver(process.cwd())
     const { resolve: resolveInner } = createResolver(import.meta.url)
 
-    const tsConfigFilePath = (DEFAULTS.tsConfigFilePath || resolve(nuxt.options.serverDir, 'tsconfig.json')).replace(/\\/g, '/')
+    const tsConfigFilePath = (options.tsConfigFilePath || resolve(nuxt.options.serverDir, 'tsconfig.json')).replace(/\\/g, '/')
 
     if(!existsSync(tsConfigFilePath)) {
       warn(`tsconfig.json not found in ${nuxt.options.serverDir}. Skipping...`)
@@ -130,6 +130,8 @@ export default defineNuxtModule<ApexModuleOptions>({
         if(_fileGenIds.get(e) !== id) return
 
         await createFile(path, code)
+        console.log('Save: ', absToRel(e));
+
         await storage.setItem(absToRel(e), { c: absToRel(path), hash: await hashFile(e), et: {
           inputType: et.inputType,
           inputFilePath: absToRel(et.inputFilePath),
@@ -141,7 +143,8 @@ export default defineNuxtModule<ApexModuleOptions>({
         return true
       }
       catch (err) {
-        throw new Error(`${err} for file ${e}`)
+        const message = err instanceof Error ? err.message : String(err)
+        throw new Error(`${message} for file ${e}`)
       }
     }
 
@@ -191,8 +194,11 @@ export default defineNuxtModule<ApexModuleOptions>({
         }
         else if(event === 'unlink' && isProcessFile) {
           try {
-            await unlink(relToAbs((await storage.getItem(endpoint)).c))
-            await storage.removeItem(absToRel(endpoint))
+            const key = absToRel(endpoint)
+            const value = await storage.getItem(key)
+
+            if (value?.c) await unlink(relToAbs(value.c))
+            await storage.removeItem(key)
           }
           catch (err) {
             error(`Error during deletion: ${(err as Error).message}`)
@@ -356,12 +362,11 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
     }
   }
 
-  if(result.inputType === 'unknown' || result.responseType === 'unknown') {
-    const arr = []
-    if(result.inputType === 'unknown') arr.push('input')
-    if(result.responseType === 'unknown') arr.push('response')
-
-    throw new Error(`Unable to determine: ${arr.join(' and ')} type${arr.length > 1 ? 's' : ''}`)
+  for (const [k, v] of Object.entries(result)) {
+    if(k.endsWith('Type') && v === 'unknown') {
+      result[k as keyof EndpointTypeStructure] = 'Record<string, any>'
+      warn(`Unable to determine ${k.replace('Type', '')} type for endpoint ${endpoint}, using 'Record<string, any>' as fallback`)
+    }
   }
 
   result.responseFilePath = firstCall? getCallDeclFile(firstCall) : sf.getFilePath()
@@ -458,7 +463,9 @@ async function compareWithStore(endpoints: string[]) {
 
   const lookup = Object.create(null) as Record<string, boolean>;
   for(let i = 0, len = endpoints.length; i < len; i++) {
-    const k = absToRel(endpoints[i])
+    if(!endpoints[i]) continue
+
+    const k = absToRel(endpoints[i]!)
     if(k) lookup[k] = true
   }
 
@@ -481,7 +488,10 @@ async function compareWithStore(endpoints: string[]) {
 }
 
 async function getRelatedFiles(endpoint: string) {
-  return await storage.getItem(absToRel(endpoint)).then(({ et }) => [ relToAbs(et.inputFilePath), relToAbs(et.responseFilePath) ] as string[])
+  return await storage.getItem(absToRel(endpoint)).then(({ et }) => et
+    ? [ et.inputFilePath, et.responseFilePath ].filter(p => p && p !== 'unknown').map(p => relToAbs(p)) as string[]
+    : []
+  )
 }
 
 async function isFolderExists(folder: string) {
