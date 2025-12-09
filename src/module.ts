@@ -1,7 +1,7 @@
 import { defineNuxtModule, addImportsDir, createResolver, addServerImportsDir } from '@nuxt/kit'
 import { dirname, join, relative, resolve } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
-import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts, SourceFile } from 'ts-morph'
+import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, SourceFile } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
@@ -97,7 +97,13 @@ export default defineNuxtModule<ApexModuleOptions>({
 
     const { resolve } = createResolver(process.cwd())
     const { resolve: resolveInner } = createResolver(import.meta.url)
-    const addAutoImport = (o: { from: string, imports: string[] }) => { nuxt.options.imports = defu({ presets: [o] }, nuxt.options.imports) }
+    const addAutoImport = (o: { from: string, imports: string[] } | { from: string, imports: string[] }[] ) => {
+      nuxt.options.imports = defu({ presets: Array.isArray(o) ? o : [o] }, nuxt.options.imports)
+    }
+
+    // await storage.init({ dir: resolve(nuxt.options.rootDir, options.cacheFolder).replace(/\\/g, '/'), encoding: 'utf-8' })
+    // console.log((await storage.data()).map(x => x.value?.et));
+    // return
 
     const simpleTsFileConfig = resolve(nuxt.options.serverDir, 'tsconfig.nuxt-apex.json')
     if(options.tsConfigFilePath === 'simple' && !existsSync(simpleTsFileConfig)) {
@@ -138,15 +144,18 @@ export default defineNuxtModule<ApexModuleOptions>({
 
         if(_fileGenIds.get(e) !== id) return
 
+        const fnForImport = { from: path, imports: [fileName, fileName + 'Async', ...(et.alias ? [et.alias, et.alias + 'Async'] : [])] }
+
         await createFile(path, code)
         await storage.setItem(absToRel(e), { c: absToRel(path), hash: await hashFile(e), et: {
           inputType: et.inputType,
           inputFilePath: absToRel(et.inputFilePath),
           responseType: et.responseType,
-          responseFilePath: absToRel(et.responseFilePath)
+          responseFilePath: absToRel(et.responseFilePath),
+          fnForImport
         }})
 
-        addAutoImport({ from: path, imports: [fileName, fileName + 'Async', ...(et.alias ? [et.alias, et.alias + 'Async'] : [])] })
+        addAutoImport(fnForImport)
 
         if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
         return true
@@ -216,6 +225,7 @@ export default defineNuxtModule<ApexModuleOptions>({
       })
     }
 
+    addAutoImport((await storage.data()).map(x => x.value?.et?.fnForImport).flat())
     addImportsDir([resolveInner('runtime/utils'), resolveInner('runtime/composables')], { prepend: true })
     addServerImportsDir([resolveInner('runtime/server/utils')], { prepend: true })
   }
