@@ -7,6 +7,7 @@ import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
 import storage from 'node-persist'
 import { existsSync } from 'node:fs'
+import { defu } from 'defu'
 import { info, error, success, warn } from './logger.ts'
 
 export interface ApexModuleOptions {
@@ -14,6 +15,8 @@ export interface ApexModuleOptions {
   sourcePath: string
   /** Output path (default: 'node_modules/.nuxt-apex/composables') */
   outputPath: string,
+  /** The path to the cache folder (default: 'node_modules/.cache/nuxt-apex') */
+  cacheFolder: string,
   /** Composable name prefix (default: 'useTFetch') */
   composablePrefix: string,
   /**Custom naming function for composable names (without prefix) */
@@ -24,12 +27,10 @@ export interface ApexModuleOptions {
   listenFileDependenciesChanges: boolean,
 /**The name of the server event handler (default: 'defineApexHandler')  */
   serverEventHandlerName: string,
-  /** The path to the tsconfig.json file */
-  tsConfigFilePath?: string,
+  /** The path to the tsconfig.json file (default: 'simple' - automatically generated simple tsconfig for faster module loading) */
+  tsConfigFilePath?: string | 'simple',
   /** Ignore endpoints by relative path, e.g. api/some-endpoint.ts (default: []) */
   ignore?: string[],
-  /** The path to the cache folder (default: 'node_modules/.cache/nuxt-apex') */
-  cacheFolder?: string,
   /** The concurrency limit for generating composables (default: 50) */
   concurrency?: number
 }
@@ -51,13 +52,13 @@ type EndpointTypeStructure = {
 
 export const DEFAULTS = {
   sourcePath: 'api',
-  outputPath: 'nuxt-apex',
-  cacheFolder: 'node_modules/.cache/nuxt-apex',
+  outputPath: '.nuxt/nuxt-apex/files',
+  cacheFolder: '.nuxt/nuxt-apex/cache',
   composablePrefix: 'useTFetch',
   namingFucntion: undefined,
   listenFileDependenciesChanges: true,
   serverEventHandlerName: 'defineApexHandler',
-  tsConfigFilePath: undefined,
+  tsConfigFilePath: 'simple',
   ignore: [],
   concurrency: 50,
   tsMorphOptions: {
@@ -92,30 +93,35 @@ export default defineNuxtModule<ApexModuleOptions>({
   },
   defaults: DEFAULTS,
   async setup(options, nuxt) {
+    if(nuxt.options._prepare) return
+
     const { resolve } = createResolver(process.cwd())
     const { resolve: resolveInner } = createResolver(import.meta.url)
+    const addAutoImport = (o: { from: string, imports: string[] }) => { nuxt.options.imports = defu({ presets: [o] }, nuxt.options.imports) }
 
-    const tsConfigFilePath = (options.tsConfigFilePath && resolve(nuxt.options.rootDir, options.tsConfigFilePath) || resolve(nuxt.options.serverDir, 'tsconfig.json')).replace(/\\/g, '/')
+    const simpleTsFileConfig = resolve(nuxt.options.serverDir, 'tsconfig.nuxt-apex.json')
+    if(options.tsConfigFilePath === 'simple' && !existsSync(simpleTsFileConfig)) {
+      await rename(resolveInner('./runtime/templates/tsconfig.txt'), simpleTsFileConfig)
+    }
+
+    const tsConfigFilePath = ((options.tsConfigFilePath === 'simple' && simpleTsFileConfig) || (options.tsConfigFilePath && resolve(nuxt.options.serverDir, 'tsconfig.json')) || '').replace(/\\/g, '/')
 
     if(!existsSync(tsConfigFilePath)) {
-      warn(options.tsConfigFilePath
-        ? `${options.tsConfigFilePath} not found. Skipping...`
-        : `tsconfig.json not found in ${nuxt.options.serverDir}. Skipping...`
-      )
+      warn('No tsconfig.json found, skipping nuxt-apex module setup. Check your apex.tsConfigFilePath option.')
       return
     }
 
     const tsProject = new Project({ tsConfigFilePath, ...options.tsMorphOptions })
     const composableTemplate = await readFile(resolveInner('./runtime/templates/fetch.txt'), 'utf8')
 
-    const outputFolder = resolve(nuxt.options.buildDir, `${options.outputPath}/composables`).replace(/\\/g, '/')
+    const outputFolder = resolve(nuxt.options.rootDir, options.outputPath).replace(/\\/g, '/')
     const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath).replace(/\\/g, '/')
     if(!await isFolderExists(sourcePath)) {
       error(`Source path "${sourcePath}" doesn't exist`)
       return
     }
 
-    await storage.init({ dir: resolve(nuxt.options.rootDir, `${options.cacheFolder}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
+    await storage.init({ dir: resolve(nuxt.options.rootDir, options.cacheFolder).replace(/\\/g, '/'), encoding: 'utf-8' })
     const limit = pLimit(options.concurrency || 50)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) => {
@@ -133,14 +139,14 @@ export default defineNuxtModule<ApexModuleOptions>({
         if(_fileGenIds.get(e) !== id) return
 
         await createFile(path, code)
-        console.log('Save: ', absToRel(e));
-
         await storage.setItem(absToRel(e), { c: absToRel(path), hash: await hashFile(e), et: {
           inputType: et.inputType,
           inputFilePath: absToRel(et.inputFilePath),
           responseType: et.responseType,
           responseFilePath: absToRel(et.responseFilePath)
         }})
+
+        addAutoImport({ from: path, imports: [fileName, fileName + 'Async', ...(et.alias ? [et.alias, et.alias + 'Async'] : [])] })
 
         if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
         return true
@@ -210,7 +216,7 @@ export default defineNuxtModule<ApexModuleOptions>({
       })
     }
 
-    addImportsDir([outputFolder, resolveInner('runtime/utils'), resolveInner('runtime/composables')], { prepend: true })
+    addImportsDir([resolveInner('runtime/utils'), resolveInner('runtime/composables')], { prepend: true })
     addServerImportsDir([resolveInner('runtime/server/utils')], { prepend: true })
   }
 })

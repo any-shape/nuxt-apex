@@ -98,6 +98,7 @@
     "conventional-changelog-conventionalcommits": "^9.1.0",
     "cypress": "^15.7.1",
     "cypress-wait-until": "^3.0.2",
+    "defu": "^6.1.4",
     "memfs": "^4.51.1",
     "nuxt": "4.2.1",
     "semantic-release": "^25.0.2",

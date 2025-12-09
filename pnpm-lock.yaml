@@ -82,6 +82,9 @@ importers:
       cypress-wait-until:
         specifier: ^3.0.2
         version: 3.0.2
+      defu:
+        specifier: ^6.1.4
+        version: 6.1.4
       memfs:
         specifier: ^4.51.1
         version: 4.51.1

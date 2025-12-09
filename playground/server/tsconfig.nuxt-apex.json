@@ -6,7 +6,6 @@
     "skipLibCheck": true
   },
   "include": [
-    "server/api/**/*.ts",
-    "server/types/**/*.ts",
+    "api/**/*.ts"
   ]
 }
