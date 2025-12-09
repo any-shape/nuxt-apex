@@ -7,4 +7,7 @@ export default defineNuxtConfig({
       asyncContext: true,
     }
   },
+  apex: {
+    tsConfigFilePath: 'server/tsconfig.apex.json'
+  }
 })

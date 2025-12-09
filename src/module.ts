@@ -51,7 +51,7 @@ type EndpointTypeStructure = {
 
 export const DEFAULTS = {
   sourcePath: 'api',
-  outputPath: 'composables/.nuxt-apex',
+  outputPath: 'nuxt-apex',
   cacheFolder: 'node_modules/.cache/nuxt-apex',
   composablePrefix: 'useTFetch',
   namingFucntion: undefined,
@@ -61,8 +61,8 @@ export const DEFAULTS = {
   ignore: [],
   concurrency: 50,
   tsMorphOptions: {
-    addFilesFromTsConfig: true,
-    skipFileDependencyResolution: false,
+    addFilesFromTsConfig: false,
+    skipFileDependencyResolution: true,
     compilerOptions: {
       skipLibCheck: true,
       allowJs: false,
@@ -95,17 +95,20 @@ export default defineNuxtModule<ApexModuleOptions>({
     const { resolve } = createResolver(process.cwd())
     const { resolve: resolveInner } = createResolver(import.meta.url)
 
-    const tsConfigFilePath = (options.tsConfigFilePath || resolve(nuxt.options.serverDir, 'tsconfig.json')).replace(/\\/g, '/')
+    const tsConfigFilePath = (options.tsConfigFilePath && resolve(nuxt.options.rootDir, options.tsConfigFilePath) || resolve(nuxt.options.serverDir, 'tsconfig.json')).replace(/\\/g, '/')
 
     if(!existsSync(tsConfigFilePath)) {
-      warn(`tsconfig.json not found in ${nuxt.options.serverDir}. Skipping...`)
+      warn(options.tsConfigFilePath
+        ? `${options.tsConfigFilePath} not found. Skipping...`
+        : `tsconfig.json not found in ${nuxt.options.serverDir}. Skipping...`
+      )
       return
     }
 
     const tsProject = new Project({ tsConfigFilePath, ...options.tsMorphOptions })
     const composableTemplate = await readFile(resolveInner('./runtime/templates/fetch.txt'), 'utf8')
 
-    const outputFolder = resolve(nuxt.options.rootDir, `${options.outputPath}/composables`).replace(/\\/g, '/')
+    const outputFolder = resolve(nuxt.options.buildDir, `${options.outputPath}/composables`).replace(/\\/g, '/')
     const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath).replace(/\\/g, '/')
     if(!await isFolderExists(sourcePath)) {
       error(`Source path "${sourcePath}" doesn't exist`)
