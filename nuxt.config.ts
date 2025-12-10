@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   },
   vite: {
     build: { target: 'es2022', minify: 'esbuild', outDir: 'dist' },
-    optimizeDeps: { include: ['zod', 'xxhash-wasm'] }
+    optimizeDeps: { include: ['zod', 'xxhash-wasm'] },
   },
   devtools: { enabled: true },
 })
