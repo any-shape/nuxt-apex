@@ -128,13 +128,13 @@ export default defineNuxtConfig({
   modules: ['nuxt-apex'],
   apex: {
     sourcePath: 'api',                              // API source folder
-    outputPath: 'composables/.nuxt-apex',           // Output for composables
-    cacheFolder: 'node_modules/.cache/nuxt-apex',   // Output for cache
+    outputPath: '.nuxt/nuxt-apex/files',            // Output for composables
+    cacheFolder: '.nuxt/nuxt-apex/cache',           // Output for cache
     composablePrefix: 'useTFetch',                  // Composable prefix
     namingFunction: undefined,                      // Custom naming function
     listenFileDependenciesChanges: true,            // Watch for file changes
     serverEventHandlerName: 'defineApexHandler',    // Server event handler name
-    tsConfigFilePath: undefined,                    // Path to tsconfig.json
+    tsConfigFilePath: 'simple',                     // Path to tsconfig.json or 'simple' that create a simple one config especially for nuxt-apex module
     ignore: ['api/internal/**'],                    // Patterns to ignore
     concurrency: 50,                                // Concurrency limit
     tsMorphOptions: { /* ... */ },                  // ts-morph options
@@ -216,73 +216,3 @@ const { data, pending, error, execute } = useTFetchPostsGetById(
   }
 )
 ```
-
-## Notes on Output
-
-⚠️ **Important**: Composables must be generated inside the `composables/` directory (not `.nuxt` or `node_modules`) to work properly with Nuxt's auto-import system.
-
-**Why this matters:**
-
-Nuxt has special behavior for the `composables/` folder:
-- Only files in `composables/` (or subfolders) are automatically registered as true composables
-- Files outside this folder are treated as regular utilities and lose Nuxt context
-- This means they can't access SSR context, plugins, or other Nuxt runtime features
-
-**What happens if you put them elsewhere:**
-
-```ts
-// ❌ If composables are in .nuxt/ or node_modules/
-const data = useTFetchPostsGetById({ id: 42 })
-// Error: "useFetch can only be used within a Nuxt app setup function"
-```
-
-**The fix is simple** - just ensure your `outputPath` points to somewhere inside `composables/`:
-
-```ts
-// nuxt.config.ts ✅
-apex: {
-  outputPath: 'composables/.nuxt-apex', // Inside composables/ - works perfectly
-  // outputPath: '.nuxt/apex',          // ❌ Outside composables/ - breaks
-}
-```
-
-**Default behavior:** nuxt-apex automatically uses `composables/.nuxt-apex` as the output path, so this works out of the box. Only change it if you need a custom structure.
-
-### Cache Location Strategy
-
-nuxt-apex uses caching to speed up composable generation. You have two options:
-
-**Option 1: Default (node_modules cache)**
-```ts
-apex: {
-  cacheFolder: 'node_modules/.cache/nuxt-apex' // Default
-}
-```
-**Pros:**
-- ✅ Keeps your project clean - cache files don't clutter your source code
-- ✅ Gitignored by default - no accidental commits of cache files
-- ✅ Standard location that tools expect
-
-**Cons:**
-- ❌ Cache is lost when `node_modules` is deleted or with `git pull` conflicts
-- ❌ Slower regeneration after fresh installs
-
-**Option 2: Local cache (synced with git)**
-```ts
-apex: {
-  cacheFolder: 'composables/.nuxt-apex/'
-}
-```
-**Pros:**
-- ✅ Cache survives `node_modules` deletion
-- ✅ Faster setup for new team members (cache comes with git clone)
-- ✅ More predictable builds across environments
-
-**Cons:**
-- ❌ Cache files are committed to your repository
-- ❌ Larger git repository size
-- ❌ Potential merge conflicts in cache files
-
-**Recommendation:** Use the default unless you have a large API and slow generation times, or your team frequently deletes `node_modules`.
-
-**Default behavior:** nuxt-apex automatically uses `composables/.nuxt-apex` as the output path, so this works out of the box. Only change it if you need a custom structure.

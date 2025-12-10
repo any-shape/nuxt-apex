@@ -1,12 +1,13 @@
 import { defineNuxtModule, addImportsDir, createResolver, addServerImportsDir } from '@nuxt/kit'
 import { dirname, join, relative, resolve } from 'node:path'
 import { mkdir, readFile, unlink, writeFile, rm, rename, access } from 'node:fs/promises'
-import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, ts, SourceFile } from 'ts-morph'
+import { Project, SyntaxKind, Node, type Symbol, type ProjectOptions, TypeAliasDeclaration, InterfaceDeclaration, CallExpression, FunctionDeclaration, FunctionExpression, ArrowFunction, ReturnStatement, ImportTypeNode, SourceFile } from 'ts-morph'
 import { glob } from 'tinyglobby'
 import pLimit from 'p-limit'
 import xxhash from 'xxhash-wasm'
 import storage from 'node-persist'
 import { existsSync } from 'node:fs'
+import { defu } from 'defu'
 import { info, error, success, warn } from './logger.ts'
 
 export interface ApexModuleOptions {
@@ -14,22 +15,22 @@ export interface ApexModuleOptions {
   sourcePath: string
   /** Output path (default: 'node_modules/.nuxt-apex/composables') */
   outputPath: string,
+  /** The path to the cache folder (default: 'node_modules/.cache/nuxt-apex') */
+  cacheFolder: string,
   /** Composable name prefix (default: 'useTFetch') */
   composablePrefix: string,
   /**Custom naming function for composable names (without prefix) */
-  namingFucntion: (path: string) => string,
+  namingFucntion?: (path: string) => string,
   /** @see https://ts-morph.com/setup/ */
   tsMorphOptions: ProjectOptions,
   /**When true, the module will listen for changes in the source files and re-generate the composables (default: true) */
   listenFileDependenciesChanges: boolean,
 /**The name of the server event handler (default: 'defineApexHandler')  */
   serverEventHandlerName: string,
-  /** The path to the tsconfig.json file */
-  tsConfigFilePath?: string,
+  /** The path to the tsconfig.json file (default: 'simple' - automatically generated simple tsconfig for faster module loading) */
+  tsConfigFilePath?: string | 'simple',
   /** Ignore endpoints by relative path, e.g. api/some-endpoint.ts (default: []) */
   ignore?: string[],
-  /** The path to the cache folder (default: 'node_modules/.cache/nuxt-apex') */
-  cacheFolder?: string,
   /** The concurrency limit for generating composables (default: 50) */
   concurrency?: number
 }
@@ -51,18 +52,18 @@ type EndpointTypeStructure = {
 
 export const DEFAULTS = {
   sourcePath: 'api',
-  outputPath: 'composables/.nuxt-apex',
-  cacheFolder: 'node_modules/.cache/nuxt-apex',
+  outputPath: '.nuxt/nuxt-apex/files',
+  cacheFolder: '.nuxt/nuxt-apex/cache',
   composablePrefix: 'useTFetch',
   namingFucntion: undefined,
   listenFileDependenciesChanges: true,
   serverEventHandlerName: 'defineApexHandler',
-  tsConfigFilePath: undefined,
+  tsConfigFilePath: 'simple',
   ignore: [],
   concurrency: 50,
   tsMorphOptions: {
-    addFilesFromTsConfig: true,
-    skipFileDependencyResolution: false,
+    addFilesFromTsConfig: false,
+    skipFileDependencyResolution: true,
     compilerOptions: {
       skipLibCheck: true,
       allowJs: false,
@@ -92,27 +93,41 @@ export default defineNuxtModule<ApexModuleOptions>({
   },
   defaults: DEFAULTS,
   async setup(options, nuxt) {
+    if(nuxt.options._prepare) return
+
     const { resolve } = createResolver(process.cwd())
     const { resolve: resolveInner } = createResolver(import.meta.url)
+    const addAutoImport = (o: { from: string, imports: string[] } | { from: string, imports: string[] }[] ) => {
+      nuxt.options.imports = defu({ presets: Array.isArray(o) ? o : [o] }, nuxt.options.imports)
+    }
 
-    const tsConfigFilePath = (DEFAULTS.tsConfigFilePath || resolve(nuxt.options.serverDir, 'tsconfig.json')).replace(/\\/g, '/')
+    // await storage.init({ dir: resolve(nuxt.options.rootDir, options.cacheFolder).replace(/\\/g, '/'), encoding: 'utf-8' })
+    // console.log((await storage.data()).map(x => x.value?.et));
+    // return
+
+    const simpleTsFileConfig = resolve(nuxt.options.serverDir, 'tsconfig.nuxt-apex.json')
+    if(options.tsConfigFilePath === 'simple' && !existsSync(simpleTsFileConfig)) {
+      await rename(resolveInner('./runtime/templates/tsconfig.txt'), simpleTsFileConfig)
+    }
+
+    const tsConfigFilePath = ((options.tsConfigFilePath === 'simple' && simpleTsFileConfig) || (options.tsConfigFilePath && resolve(nuxt.options.serverDir, 'tsconfig.json')) || '').replace(/\\/g, '/')
 
     if(!existsSync(tsConfigFilePath)) {
-      warn(`tsconfig.json not found in ${nuxt.options.serverDir}. Skipping...`)
+      warn('No tsconfig.json found, skipping nuxt-apex module setup. Check your apex.tsConfigFilePath option.')
       return
     }
 
     const tsProject = new Project({ tsConfigFilePath, ...options.tsMorphOptions })
     const composableTemplate = await readFile(resolveInner('./runtime/templates/fetch.txt'), 'utf8')
 
-    const outputFolder = resolve(nuxt.options.rootDir, `${options.outputPath}/composables`).replace(/\\/g, '/')
+    const outputFolder = resolve(nuxt.options.rootDir, options.outputPath).replace(/\\/g, '/')
     const sourcePath = resolve(nuxt.options.serverDir, options.sourcePath).replace(/\\/g, '/')
     if(!await isFolderExists(sourcePath)) {
       error(`Source path "${sourcePath}" doesn't exist`)
       return
     }
 
-    await storage.init({ dir: resolve(nuxt.options.rootDir, `${options.cacheFolder}/storage`).replace(/\\/g, '/'), encoding: 'utf-8' })
+    await storage.init({ dir: resolve(nuxt.options.rootDir, options.cacheFolder).replace(/\\/g, '/'), encoding: 'utf-8' })
     const limit = pLimit(options.concurrency || 50)
 
     const executor = async (e: string, isUpdate?: boolean, silent: boolean = true) => {
@@ -129,19 +144,25 @@ export default defineNuxtModule<ApexModuleOptions>({
 
         if(_fileGenIds.get(e) !== id) return
 
+        const fnForImport = { from: path, imports: [fileName, fileName + 'Async', ...(et.alias ? [et.alias, et.alias + 'Async'] : [])] }
+
         await createFile(path, code)
         await storage.setItem(absToRel(e), { c: absToRel(path), hash: await hashFile(e), et: {
           inputType: et.inputType,
           inputFilePath: absToRel(et.inputFilePath),
           responseType: et.responseType,
-          responseFilePath: absToRel(et.responseFilePath)
+          responseFilePath: absToRel(et.responseFilePath),
+          fnForImport
         }})
+
+        addAutoImport(fnForImport)
 
         if(!silent) success(`Successfully ${isUpdate ? 'updated' : 'generated'} ${fileName} fetcher`)
         return true
       }
       catch (err) {
-        throw new Error(`${err} for file ${e}`)
+        const message = err instanceof Error ? err.message : String(err)
+        throw new Error(`${message} for file ${e}`)
       }
     }
 
@@ -191,8 +212,11 @@ export default defineNuxtModule<ApexModuleOptions>({
         }
         else if(event === 'unlink' && isProcessFile) {
           try {
-            await unlink(relToAbs((await storage.getItem(endpoint)).c))
-            await storage.removeItem(absToRel(endpoint))
+            const key = absToRel(endpoint)
+            const value = await storage.getItem(key)
+
+            if (value?.c) await unlink(relToAbs(value.c))
+            await storage.removeItem(key)
           }
           catch (err) {
             error(`Error during deletion: ${(err as Error).message}`)
@@ -201,7 +225,8 @@ export default defineNuxtModule<ApexModuleOptions>({
       })
     }
 
-    addImportsDir([outputFolder, resolveInner('runtime/utils'), resolveInner('runtime/composables')], { prepend: true })
+    addAutoImport((await storage.data()).map(x => x.value?.et?.fnForImport).flat())
+    addImportsDir([resolveInner('runtime/utils'), resolveInner('runtime/composables')], { prepend: true })
     addServerImportsDir([resolveInner('runtime/server/utils')], { prepend: true })
   }
 })
@@ -356,12 +381,11 @@ export async function extractTypesFromEndpoint(endpoint: string, tsProject: Proj
     }
   }
 
-  if(result.inputType === 'unknown' || result.responseType === 'unknown') {
-    const arr = []
-    if(result.inputType === 'unknown') arr.push('input')
-    if(result.responseType === 'unknown') arr.push('response')
-
-    throw new Error(`Unable to determine: ${arr.join(' and ')} type${arr.length > 1 ? 's' : ''}`)
+  for (const [k, v] of Object.entries(result)) {
+    if(k.endsWith('Type') && v === 'unknown') {
+      result[k as keyof EndpointTypeStructure] = 'Record<string, any>'
+      warn(`Unable to determine ${k.replace('Type', '')} type for endpoint ${endpoint}, using 'Record<string, any>' as fallback`)
+    }
   }
 
   result.responseFilePath = firstCall? getCallDeclFile(firstCall) : sf.getFilePath()
@@ -414,6 +438,7 @@ export function constructComposableCode(template: string, et: EndpointTypeStruct
   return template
     .replace(/:inputType/g, et.inputType)
     .replace(/:responseType/g, et.responseType)
+    .replaceAll(/:fallback/g, et.inputType === 'Record<string, any>' ? ' = {} as T' : '')
     .replaceAll(/:url/g, `\`${es.url}\``)
     .replace(/:method/g, `\`${es.method}\``)
     .replace(/:apiNamePrefix/g, composablePrefix)
@@ -458,7 +483,9 @@ async function compareWithStore(endpoints: string[]) {
 
   const lookup = Object.create(null) as Record<string, boolean>;
   for(let i = 0, len = endpoints.length; i < len; i++) {
-    const k = absToRel(endpoints[i])
+    if(!endpoints[i]) continue
+
+    const k = absToRel(endpoints[i]!)
     if(k) lookup[k] = true
   }
 
@@ -481,7 +508,10 @@ async function compareWithStore(endpoints: string[]) {
 }
 
 async function getRelatedFiles(endpoint: string) {
-  return await storage.getItem(absToRel(endpoint)).then(({ et }) => [ relToAbs(et.inputFilePath), relToAbs(et.responseFilePath) ] as string[])
+  return await storage.getItem(absToRel(endpoint)).then(({ et }) => et
+    ? [ et.inputFilePath, et.responseFilePath ].filter(p => p && p !== 'unknown').map(p => relToAbs(p)) as string[]
+    : []
+  )
 }
 
 async function isFolderExists(folder: string) {

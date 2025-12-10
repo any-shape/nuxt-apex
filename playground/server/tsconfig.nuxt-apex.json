@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "server/api/**/*.ts"
+  ]
+}
